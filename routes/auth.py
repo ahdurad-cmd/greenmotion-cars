@@ -86,10 +86,22 @@ def change_password():
     flash('Adgangskode opdateret succesfuldt', 'success')
     return redirect(url_for('auth.profile'))
 
+@bp.route('/init-db')
+def init_db():
+    """Initialize database tables"""
+    try:
+        db.create_all()
+        return "Database tables created!"
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
 @bp.route('/setup-admin')
 def setup_admin():
     """Create initial admin user - only works if no users exist"""
     try:
+        # Ensure tables exist
+        db.create_all()
+        
         # Check if any user exists
         if User.query.first() is not None:
             return "Admin already exists", 403
