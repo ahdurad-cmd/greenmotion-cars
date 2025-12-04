@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Kunderapport{% endblock %}
+{% block content %}
+<h1>Kunde Rapport</h1>
+<div class="row g-4 mb-4">
+<div class="col-md-4"><div class="card"><div class="card-body"><h6>Total kunder</h6><h3>{{ total_customers }}</h3></div></div></div>
+<div class="col-md-4"><div class="card"><div class="card-body"><h6>Forhandlere</h6><h3>{{ dealers }}</h3></div></div></div>
+<div class="col-md-4"><div class="card"><div class="card-body"><h6>Private</h6><h3>{{ private }}</h3></div></div></div>
+</div>
+<div class="card"><div class="card-header"><h5>Top kunder</h5></div><div class="card-body">
+<table class="table"><thead><tr><th>Kunde</th><th>Type</th><th>Køb</th><th>Omsætning</th></tr></thead><tbody>
+{% for c in top_customers %}<tr><td>{{ c.name }}</td><td>{{ c.customer_type }}</td><td>{{ c.purchase_count }}</td><td>{{ "{:,.0f}".format(c.total_revenue or 0) }} DKK</td></tr>{% endfor %}
+</tbody></table>
+</div></div>
+{% endblock %}

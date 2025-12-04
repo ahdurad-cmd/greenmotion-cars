@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Salgsrapport{% endblock %}
+{% block content %}
+<h1>Salgs Rapport</h1>
+<div class="row g-4 mb-4">
+<div class="col-md-3"><div class="card"><div class="card-body"><h6>Antal salg</h6><h3>{{ total_sales }}</h3></div></div></div>
+<div class="col-md-3"><div class="card"><div class="card-body"><h6>Omsætning</h6><h3>{{ "{:,.0f}".format(total_revenue) }} DKK</h3></div></div></div>
+<div class="col-md-3"><div class="card"><div class="card-body"><h6>Fortjeneste</h6><h3>{{ "{:,.0f}".format(total_profit) }} DKK</h3></div></div></div>
+<div class="col-md-3"><div class="card"><div class="card-body"><h6>Margin</h6><h3>{{ "{:.1f}".format(avg_margin) }}%</h3></div></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Min Profil{% endblock %}
+{% block content %}
+<h1>Min Profil</h1>
+<div class="card mb-4"><div class="card-body">
+<p><strong>Brugernavn:</strong> {{ current_user.username }}</p>
+<p><strong>Navn:</strong> {{ current_user.full_name }}</p>
+<p><strong>Email:</strong> {{ current_user.email }}</p>
+<p><strong>Rolle:</strong> <span class="badge bg-primary">{{ current_user.role }}</span></p>
+</div></div>
+<div class="card"><div class="card-header"><h5>Skift Adgangskode</h5></div><div class="card-body">
+<form method="POST" action="{{ url_for('auth.change_password') }}">
+<div class="mb-3"><label>Nuværende adgangskode</label><input type="password" name="current_password" class="form-control" required></div>
+<div class="mb-3"><label>Ny adgangskode</label><input type="password" name="new_password" class="form-control" required></div>
+<div class="mb-3"><label>Bekræft ny adgangskode</label><input type="password" name="confirm_password" class="form-control" required></div>
+<button type="submit" class="btn btn-primary">Skift Adgangskode</button>
+</form>
+</div></div>
+{% endblock %}

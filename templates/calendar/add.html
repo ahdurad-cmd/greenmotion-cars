@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Ny Begivenhed{% endblock %}
+{% block content %}
+<h1>Opret Ny Begivenhed</h1>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Titel *</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Beskrivelse</label>
+                <textarea name="description" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Dato *</label>
+                    <input type="date" name="event_date" class="form-control" value="{{ default_date }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <select name="event_type" class="form-select">
+                        <option value="note">Note</option>
+                        <option value="meeting">Møde</option>
+                        <option value="delivery">Levering</option>
+                        <option value="inspection">Eftersyn</option>
+                        <option value="other">Andet</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="form-check">
+                    <input type="checkbox" name="is_all_day" class="form-check-input" id="allDay" checked>
+                    <label class="form-check-label" for="allDay">Hele dagen</label>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-3" id="timeFields" style="display: none;">
+                <div class="col-md-6">
+                    <label class="form-label">Start tid</label>
+                    <input type="time" name="start_time" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Slut tid</label>
+                    <input type="time" name="end_time" class="form-control">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Lokation</label>
+                <input type="text" name="location" class="form-control">
+            </div>
+            
+            <hr>
+            
+            <h5 class="mb-3">Tilknyt til (valgfrit)</h5>
+            
+            <div class="mb-3">
+                <label class="form-label">Bil</label>
+                <select name="car_id" class="form-select">
+                    <option value="">Ingen</option>
+                    {% for car in cars %}
+                    <option value="{{ car.id }}">{{ car.make }} {{ car.model }} ({{ car.vin[:10] }}...)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Kunde</label>
+                <select name="customer_id" class="form-select">
+                    <option value="">Ingen</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Salg</label>
+                <select name="sale_id" class="form-select">
+                    <option value="">Ingen</option>
+                    {% for sale in sales %}
+                    <option value="{{ sale.id }}">{{ sale.sale_number }} - {{ sale.customer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Opret</button>
+            <a href="{{ url_for('calendar.index') }}" class="btn btn-secondary">Annuller</a>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('allDay').addEventListener('change', function() {
+    document.getElementById('timeFields').style.display = this.checked ? 'none' : 'flex';
+});
+</script>
+{% endblock %}

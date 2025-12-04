@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Rediger Logistik{% endblock %}
+{% block content %}
+<h1>Rediger Logistik</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3"><label>Transportfirma</label><input type="text" name="transport_company" class="form-control" value="{{ entry.transport_company or '' }}"></div>
+<div class="mb-3"><label>Tracking</label><input type="text" name="tracking_number" class="form-control" value="{{ entry.tracking_number or '' }}"></div>
+<div class="mb-3"><label>Aktuel position</label><input type="text" name="current_location" class="form-control" value="{{ entry.current_location or '' }}"></div>
+<div class="mb-3"><label>Status</label>
+<select name="status" class="form-select">
+<option value="scheduled" {% if entry.status=='scheduled' %}selected{% endif %}>Planlagt</option>
+<option value="picked_up" {% if entry.status=='picked_up' %}selected{% endif %}>Afhentet</option>
+<option value="in_transit" {% if entry.status=='in_transit' %}selected{% endif %}>Undervejs</option>
+<option value="arrived" {% if entry.status=='arrived' %}selected{% endif %}>Ankommet</option>
+</select>
+</div>
+<button type="submit" class="btn btn-primary">Gem</button>
+<a href="{{ url_for('logistics.view_logistics', logistics_id=entry.id) }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

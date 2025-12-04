@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Rediger Bruger{% endblock %}
+{% block content %}
+<h1>Rediger {{ user.username }}</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3"><label>Fulde navn</label><input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required></div>
+<div class="mb-3"><label>Email</label><input type="email" name="email" class="form-control" value="{{ user.email }}" required></div>
+<div class="mb-3"><label>Ny adgangskode (lad være tom for at beholde)</label><input type="password" name="new_password" class="form-control"></div>
+<div class="mb-3"><label>Rolle</label>
+<select name="role" class="form-select">
+<option value="user" {% if user.role=='user' %}selected{% endif %}>Bruger</option>
+<option value="sales" {% if user.role=='sales' %}selected{% endif %}>Sales</option>
+<option value="manager" {% if user.role=='manager' %}selected{% endif %}>Manager</option>
+<option value="admin" {% if user.role=='admin' %}selected{% endif %}>Administrator</option>
+</select>
+</div>
+<div class="mb-3"><div class="form-check">
+<input type="checkbox" name="is_active" class="form-check-input" {% if user.is_active %}checked{% endif %}>
+<label class="form-check-label">Aktiv</label>
+</div></div>
+<button type="submit" class="btn btn-primary">Gem</button>
+<a href="{{ url_for('admin.list_users') }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

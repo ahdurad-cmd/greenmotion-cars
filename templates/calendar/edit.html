@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Rediger {{ event.title }}{% endblock %}
+{% block content %}
+<h1>Rediger Begivenhed</h1>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Titel *</label>
+                <input type="text" name="title" class="form-control" value="{{ event.title }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Beskrivelse</label>
+                <textarea name="description" class="form-control" rows="3">{{ event.description or '' }}</textarea>
+            </div>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Dato *</label>
+                    <input type="date" name="event_date" class="form-control" value="{{ event.event_date.strftime('%Y-%m-%d') }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <select name="event_type" class="form-select">
+                        <option value="note" {% if event.event_type=='note' %}selected{% endif %}>Note</option>
+                        <option value="meeting" {% if event.event_type=='meeting' %}selected{% endif %}>Møde</option>
+                        <option value="delivery" {% if event.event_type=='delivery' %}selected{% endif %}>Levering</option>
+                        <option value="inspection" {% if event.event_type=='inspection' %}selected{% endif %}>Eftersyn</option>
+                        <option value="other" {% if event.event_type=='other' %}selected{% endif %}>Andet</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="form-check">
+                    <input type="checkbox" name="is_all_day" class="form-check-input" id="allDay" {% if event.is_all_day %}checked{% endif %}>
+                    <label class="form-check-label" for="allDay">Hele dagen</label>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-3" id="timeFields" style="display: {% if event.is_all_day %}none{% else %}flex{% endif %};">
+                <div class="col-md-6">
+                    <label class="form-label">Start tid</label>
+                    <input type="time" name="start_time" class="form-control" value="{% if event.start_time %}{{ event.start_time.strftime('%H:%M') }}{% endif %}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Slut tid</label>
+                    <input type="time" name="end_time" class="form-control" value="{% if event.end_time %}{{ event.end_time.strftime('%H:%M') }}{% endif %}">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Lokation</label>
+                <input type="text" name="location" class="form-control" value="{{ event.location or '' }}">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Gem</button>
+            <a href="{{ url_for('calendar.view_event', event_id=event.id) }}" class="btn btn-secondary">Annuller</a>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('allDay').addEventListener('change', function() {
+    document.getElementById('timeFields').style.display = this.checked ? 'none' : 'flex';
+});
+</script>
+{% endblock %}

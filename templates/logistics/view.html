@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Logistik{% endblock %}
+{% block content %}
+<h1>Logistik Detaljer</h1>
+<div class="card"><div class="card-body">
+<p><strong>Bil:</strong> <a href="{{ url_for('cars.view_car', car_id=entry.car.id) }}">{{ entry.car.make }} {{ entry.car.model }}</a></p>
+<p><strong>Transport:</strong> {{ entry.transport_company }}</p>
+<p><strong>Tracking:</strong> {{ entry.tracking_number }}</p>
+<p><strong>Status:</strong> <span class="badge bg-info">{{ entry.status }}</span></p>
+<a href="{{ url_for('logistics.edit_logistics', logistics_id=entry.id) }}" class="btn btn-primary">Rediger</a>
+<a href="{{ url_for('logistics.list_logistics') }}" class="btn btn-secondary">Tilbage</a>
+</div></div>
+{% endblock %}

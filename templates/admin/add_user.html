@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Ny Bruger{% endblock %}
+{% block content %}
+<h1>Opret Ny Bruger</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3"><label>Brugernavn *</label><input type="text" name="username" class="form-control" required></div>
+<div class="mb-3"><label>Fulde navn *</label><input type="text" name="full_name" class="form-control" required></div>
+<div class="mb-3"><label>Email *</label><input type="email" name="email" class="form-control" required></div>
+<div class="mb-3"><label>Adgangskode *</label><input type="password" name="password" class="form-control" required></div>
+<div class="mb-3"><label>Rolle</label>
+<select name="role" class="form-select">
+<option value="user">Bruger</option>
+<option value="sales">Sales</option>
+<option value="manager">Manager</option>
+<option value="admin">Administrator</option>
+</select>
+</div>
+<div class="mb-3"><div class="form-check">
+<input type="checkbox" name="is_active" class="form-check-input" checked>
+<label class="form-check-label">Aktiv</label>
+</div></div>
+<button type="submit" class="btn btn-primary">Opret</button>
+<a href="{{ url_for('admin.list_users') }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

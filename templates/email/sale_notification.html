@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }
+        .car-info {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .price {
+            font-size: 24px;
+            color: #11998e;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background: #e8f5f3;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #11998e;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 12px;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .info-row {
+            display: table-row;
+        }
+        .info-label {
+            display: table-cell;
+            padding: 5px 10px;
+            font-weight: bold;
+            width: 40%;
+        }
+        .info-value {
+            display: table-cell;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Nyt Salg Registreret!</h1>
+    </div>
+    <div class="content">
+        <h2>Salg #{{ sale.sale_number }}</h2>
+        <p>
+            <strong>Kunde:</strong> {{ sale.customer.name }}<br>
+            <strong>Sælger:</strong> {{ sale.salesperson.full_name }}<br>
+            <strong>Dato:</strong> {{ sale.created_at.strftime('%d-%m-%Y %H:%M') }}
+        </p>
+        
+        <div class="car-info">
+            <h3>🚗 Bil Information</h3>
+            <div class="info-grid">
+                <div class="info-row">
+                    <div class="info-label">Mærke/Model:</div>
+                    <div class="info-value">{{ sale.car.make }} {{ sale.car.model }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">År:</div>
+                    <div class="info-value">{{ sale.car.year }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">VIN:</div>
+                    <div class="info-value">{{ sale.car.vin }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Kilometerstand:</div>
+                    <div class="info-value">{{ '{:,.0f}'.format(sale.car.mileage) if sale.car.mileage else 'N/A' }} km</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="price">
+            💰 {{ '{:,.2f}'.format(sale.final_price if sale.final_price else sale.list_price) }} kr.
+        </div>
+        
+        <p><strong>Status:</strong> 
+            {% if sale.status == 'lead' %}Lead
+            {% elif sale.status == 'offer_sent' %}Tilbud sendt
+            {% elif sale.status == 'negotiation' %}Forhandling
+            {% elif sale.status == 'contract_signed' %}Kontrakt underskrevet
+            {% elif sale.status == 'payment_pending' %}Afventer betaling
+            {% elif sale.status == 'completed' %}Gennemført ✅
+            {% else %}{{ sale.status }}
+            {% endif %}
+        </p>
+        
+        {% if sale.notes %}
+        <p><strong>Noter:</strong><br>
+        {{ sale.notes }}</p>
+        {% endif %}
+        
+        <div style="text-align: center;">
+            <a href="{{ url_for('sales.sale_detail', id=sale.id, _external=True) }}" class="button">
+                Se salgdetaljer
+            </a>
+        </div>
+    </div>
+    <div class="footer">
+        <p>
+            <strong>GreenMotion Cars</strong><br>
+            CRM System Notifikation<br>
+            © {{ now.year }} Alle rettigheder forbeholdes
+        </p>
+    </div>
+</body>
+</html>

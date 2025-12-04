@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 Velkommen til GreenMotion Cars</h1>
+    </div>
+    <div class="content">
+        <h2>Hej {{ customer.name }}!</h2>
+        <p>
+            Tak fordi du valgte GreenMotion Cars. Vi er glade for at have dig som kunde!
+        </p>
+        <p>
+            Som {{ 'forhandler' if customer.is_dealer() else 'privatkunde' }} hos os får du:
+        </p>
+        <ul>
+            {% if customer.is_dealer() %}
+            <li>Særlige forhandlerpriser</li>
+            <li>Betalingsbetingelser på {{ customer.payment_terms }} dage</li>
+            <li>Kreditgrænse op til {{ customer.credit_limit }} kr.</li>
+            {% else %}
+            <li>Garanti på alle biler</li>
+            <li>Finansieringsmuligheder</li>
+            <li>Gratis levering i Danmark</li>
+            {% endif %}
+            <li>Dedikeret kundeservice</li>
+            <li>Adgang til hele vores lager</li>
+        </ul>
+        <p>
+            Du kan altid kontakte os på:
+        </p>
+        <ul>
+            <li>📧 Email: info@greenmotioncars.dk</li>
+            <li>📱 Telefon: +45 98 12 34 56</li>
+            <li>🏢 Adresse: Nørresundby, Danmark</li>
+        </ul>
+        <div style="text-align: center;">
+            <a href="{{ url_for('cars.list_cars', _external=True) }}" class="button">
+                Se vores bilkatalog
+            </a>
+        </div>
+    </div>
+    <div class="footer">
+        <p>
+            <strong>GreenMotion Cars</strong><br>
+            Din partner i bilimport<br>
+            © {{ now.year }} Alle rettigheder forbeholdes
+        </p>
+    </div>
+</body>
+</html>

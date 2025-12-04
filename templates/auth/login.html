@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Login - GreenMotion Cars{% endblock %}
+
+{% block login_content %}
+<div class="row justify-content-center min-vh-100 align-items-center">
+    <div class="col-md-5">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h1 class="mb-3">
+                        <i class="bi bi-car-front-fill text-primary"></i>
+                    </h1>
+                    <h2>GreenMotion Cars</h2>
+                    <p class="text-muted">CRM System</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Brugernavn</label>
+                        <input type="text" class="form-control form-control-lg" id="username" 
+                               name="username" required autofocus>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Adgangskode</label>
+                        <input type="password" class="form-control form-control-lg" id="password" 
+                               name="password" required>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">
+                            Husk mig
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Log ind
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <small class="text-muted">GreenMotion Cars CRM System © 2025</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

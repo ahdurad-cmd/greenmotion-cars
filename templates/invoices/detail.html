@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Faktura {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="bi bi-receipt"></i> Faktura {{ invoice.invoice_number }}</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <a href="{{ url_for('invoices.print_invoice', id=invoice.id) }}" class="btn btn-secondary" target="_blank">
+                    <i class="bi bi-printer"></i> Print
+                </a>
+                {% if invoice.status != 'paid' %}
+                <a href="{{ url_for('invoices.edit_invoice', id=invoice.id) }}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Rediger
+                </a>
+                {% endif %}
+                <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Tilbage
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Invoice Details -->
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Fakturaoplysninger</h5>
+                    <span class="badge 
+                        {% if invoice.status == 'draft' %}bg-secondary
+                        {% elif invoice.status == 'sent' %}bg-info
+                        {% elif invoice.status == 'paid' %}bg-success
+                        {% elif invoice.status == 'overdue' %}bg-danger
+                        {% elif invoice.status == 'cancelled' %}bg-dark
+                        {% endif %}">
+                        {{ invoice.status.upper() }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Kunde</h6>
+                            <p class="mb-1"><strong>{{ invoice.get_customer_name() }}</strong></p>
+                            {% for line in invoice.get_customer_address_lines() %}
+                            {% if line.strip() %}
+                            <p class="mb-1">{{ line }}</p>
+                            {% endif %}
+                            {% endfor %}
+                            {% if invoice.customer_email or (invoice.customer and invoice.customer.email) %}
+                            <p class="mb-1">
+                                <i class="bi bi-envelope"></i> {{ invoice.customer_email or invoice.customer.email }}
+                            </p>
+                            {% endif %}
+                            {% if invoice.customer_phone or (invoice.customer and invoice.customer.phone) %}
+                            <p class="mb-1">
+                                <i class="bi bi-telephone"></i> {{ invoice.customer_phone or invoice.customer.phone }}
+                            </p>
+                            {% endif %}
+                            {% if invoice.customer_cvr or (invoice.customer and invoice.customer.cvr) %}
+                            <p class="mb-1">
+                                <strong>CVR:</strong> {{ invoice.customer_cvr or invoice.customer.cvr }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Fakturanummer:</strong></td>
+                                    <td>{{ invoice.invoice_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fakturadato:</strong></td>
+                                    <td>{{ invoice.invoice_date.strftime('%d-%m-%Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Forfaldsdato:</strong></td>
+                                    <td>
+                                        {{ invoice.due_date.strftime('%d-%m-%Y') }}
+                                        {% if invoice.is_overdue() and invoice.status != 'paid' %}
+                                        <span class="badge bg-danger">Forfald</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Betalingsbetingelser:</strong></td>
+                                    <td>{{ invoice.payment_terms }} dage</td>
+                                </tr>
+                                {% if invoice.payment_date %}
+                                <tr>
+                                    <td><strong>Betalt dato:</strong></td>
+                                    <td>{{ invoice.payment_date.strftime('%d-%m-%Y') }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Line Items -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Beskrivelse</th>
+                                    <th class="text-end" style="width: 10%;">Antal</th>
+                                    <th class="text-end" style="width: 15%;">Enhedspris</th>
+                                    <th class="text-end" style="width: 10%;">Rabat</th>
+                                    <th class="text-end" style="width: 15%;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in line_items %}
+                                <tr>
+                                    {% if item.quantity and item.unit_price and item.unit_price > 0 %}
+                                        <td>{{ item.description }}</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(item.quantity) }}</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(item.unit_price) }} {{ invoice.purchase_currency }}</td>
+                                        <td class="text-end">
+                                            {% if item.discount_percentage > 0 %}
+                                            {{ '{:,.2f}'.format(item.discount_percentage) }}%
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end"><strong>{{ '{:,.2f}'.format(item.total()) }} {{ invoice.purchase_currency }}</strong></td>
+                                    {% else %}
+                                        <td colspan="5">{{ item.description }}</td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td class="text-end text-muted">Subtotal</td>
+                                    <td class="text-end"><strong>{{ '{:,.2f}'.format(invoice.subtotal) }} <span class="badge bg-light text-muted border" style="font-weight:600;">{{ invoice.purchase_currency }}</span></strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td class="text-end text-muted">Moms ({{ '{:,.2f}'.format(invoice.vat_rate) }}%)</td>
+                                    <td class="text-end"><strong>{{ '{:,.2f}'.format(invoice.vat_amount) }} <span class="badge bg-light text-muted border" style="font-weight:600;">{{ invoice.purchase_currency }}</span></strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="border-0 pt-0"><div class="border-top"></div></td>
+                                </tr>
+                                <tr class="table-light">
+                                    <td colspan="3"></td>
+                                    <td class="text-end"><strong>Total</strong></td>
+                                    <td class="text-end"><h5 class="mb-0">{{ '{:,.2f}'.format(invoice.total_amount) }} <span class="badge bg-white text-secondary border" style="font-weight:700;">{{ invoice.purchase_currency }}</span></h5></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    {% if invoice.notes %}
+                    <div class="alert alert-info mt-3">
+                        <strong>Noter:</strong><br>
+                        {{ invoice.notes|nl2br|safe }}
+                    </div>
+                    {% endif %}
+
+                    {% if invoice.internal_notes %}
+                    <div class="alert alert-warning mt-3">
+                        <strong>Interne noter:</strong><br>
+                        {{ invoice.internal_notes|nl2br|safe }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Sidebar -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Handlinger</h5>
+                </div>
+                <div class="card-body">
+                    {% if invoice.status == 'draft' %}
+                    <form method="POST" action="{{ url_for('invoices.update_status', id=invoice.id, status='sent') }}">
+                        <button type="submit" class="btn btn-info w-100 mb-2">
+                            <i class="bi bi-send"></i> Marker som sendt
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if invoice.status in ['draft', 'sent'] %}
+                    <form method="POST" action="{{ url_for('invoices.update_status', id=invoice.id, status='paid') }}">
+                        <button type="submit" class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-check-circle"></i> Marker som betalt
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if invoice.status != 'cancelled' and invoice.status != 'paid' %}
+                    <form method="POST" action="{{ url_for('invoices.update_status', id=invoice.id, status='cancelled') }}" 
+                          onsubmit="return confirm('Er du sikker på at du vil annullere denne faktura?')">
+                        <button type="submit" class="btn btn-warning w-100 mb-2">
+                            <i class="bi bi-x-circle"></i> Annuller faktura
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <hr>
+
+                    {% if invoice.status != 'paid' %}
+                    <form method="POST" action="{{ url_for('invoices.delete_invoice', id=invoice.id) }}" 
+                          onsubmit="return confirm('Er du SIKKER på at du vil slette denne faktura? Dette kan ikke fortrydes!')">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-trash"></i> Slet faktura
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i> Betalte fakturaer kan ikke slettes
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Metadata</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2 small">
+                        <strong>Oprettet:</strong><br>
+                        {{ invoice.created_at.strftime('%d-%m-%Y %H:%M') }}
+                    </p>
+                    <p class="mb-2 small">
+                        <strong>Senest opdateret:</strong><br>
+                        {{ invoice.updated_at.strftime('%d-%m-%Y %H:%M') }}
+                    </p>
+                    {% if invoice.sent_at %}
+                    <p class="mb-0 small">
+                        <strong>Sendt:</strong><br>
+                        {{ invoice.sent_at.strftime('%d-%m-%Y %H:%M') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

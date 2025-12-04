@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+
+{% block title %}Tilføj Bil - GreenMotion Cars{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="mb-1">Tilføj Ny Bil</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('cars.list_cars') }}">Biler</a></li>
+                <li class="breadcrumb-item active">Tilføj Bil</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="text-muted small">Felter markeret med * er påkrævet</div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-file-earmark-image me-2"></i>Annoncedata</h5>
+                <p class="text-muted mb-3">Upload et skærmbillede eller PDF fra mobile.de, Blocket eller andre salgssider, så udfylder systemet automatisk felterne.</p>
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle me-2"></i><strong>Tip:</strong> Upload et skærmbillede af annoncen for bedste resultat. Nogle hjemmesider blokerer direkte links.
+                </div>
+                <form id="uploadForm" enctype="multipart/form-data" class="row g-3">
+                    <div class="col-md-6">
+                        <input type="file" class="form-control" id="adImage" name="ad_image" accept="image/*,.pdf">
+                        <small class="text-muted">Tag et skærmbillede af annoncen for bedst resultat</small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                            <input type="url" class="form-control" id="ad_url_input" name="ad_url_input" placeholder="Eller indsæt link (https://...)">
+                        </div>
+                        <small class="text-muted">Linket gemmes automatisk når du gemmer bilen</small>
+                    </div>
+                    <div class="col-12 d-flex gap-2">
+                        <button type="button" class="btn btn-primary" id="parseBtn">
+                            <i class="bi bi-magic me-2"></i>Ekstraher Data
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="skipParseBtn">
+                            <i class="bi bi-arrow-right me-2"></i>Spring over - udfyld manuelt
+                        </button>
+                        <div id="parseStatus" class="flex-grow-1"></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('cars.add_car') }}" enctype="multipart/form-data" id="carForm">
+            <!-- Hidden field to store ad URL -->
+            <input type="hidden" name="ad_url" id="ad_url" value="">
+            
+            <h5 class="mb-3">Grundlæggende Information</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="vin" class="form-label">VIN-nummer *</label>
+                    <input type="text" class="form-control" id="vin" name="vin" required 
+                           maxlength="17" style="text-transform: uppercase;">
+                    <small class="text-muted">17 tegn</small>
+                </div>
+                <div class="col-md-3">
+                    <label for="make" class="form-label">Mærke *</label>
+                    <input type="text" class="form-control" id="make" name="make" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="model" class="form-label">Model *</label>
+                    <input type="text" class="form-control" id="model" name="model" required>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-2">
+                    <label for="year" class="form-label">Årgang *</label>
+                    <input type="number" class="form-control" id="year" name="year" required 
+                           min="1990" max="2026">
+                </div>
+                <div class="col-md-3">
+                    <label for="color" class="form-label">Farve</label>
+                    <input type="text" class="form-control" id="color" name="color">
+                </div>
+                <div class="col-md-4">
+                    <label for="mileage" class="form-label">Kilometerstand</label>
+                    <input type="number" class="form-control" id="mileage" name="mileage" min="0">
+                </div>
+            </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3">Import Information</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label for="import_country" class="form-label">Importland *</label>
+                    <select class="form-select" id="import_country" name="import_country" required>
+                        <option value="">Vælg...</option>
+                        <option value="Sverige">Sverige</option>
+                        <option value="Tyskland">Tyskland</option>
+                        <option value="Danmark">Danmark</option>
+                        <option value="Norge">Norge</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="dealer_name" class="form-label">Forhandler</label>
+                    <input type="text" class="form-control" id="dealer_name" name="dealer_name">
+                </div>
+                <div class="col-md-4">
+                    <label for="dealer_location" class="form-label">By (lokation)</label>
+                    <input type="text" class="form-control" id="dealer_location" name="dealer_location">
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="distance_km" class="form-label">Afstand fra Aalborg (km)</label>
+                    <input type="number" class="form-control" id="distance_km" name="distance_km" min="0">
+                    <small class="text-muted">Transport beregnes automatisk</small>
+                </div>
+                <div class="col-md-3">
+                    <label for="import_date" class="form-label">Importdato</label>
+                    <input type="date" class="form-control" id="import_date" name="import_date">
+                </div>
+                <div class="col-md-2">
+                    <label for="purchase_currency" class="form-label">Valuta</label>
+                    <select class="form-select" id="purchase_currency" name="purchase_currency">
+                        <option value="DKK">DKK</option>
+                        <option value="SEK">SEK</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+            </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3">Omkostninger</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="purchase_price" class="form-label">Købspris (inkl. moms) *</label>
+                    <input type="number" class="form-control" id="purchase_price" name="purchase_price" 
+                           required step="0.01" min="0">
+                    <div class="form-text small text-muted" id="net_price_info" style="display:none;">
+                        <i class="bi bi-info-circle me-1"></i>Netto: <span id="net_price_value">-</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="discount" class="form-label">Rabat</label>
+                    <input type="number" class="form-control" id="discount" name="discount" 
+                           step="0.01" min="0" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label for="transport_cost" class="form-label">Transportomkostninger</label>
+                    <input type="number" class="form-control" id="transport_cost" name="transport_cost" 
+                           step="0.01" min="0" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label for="customs_cost" class="form-label">Told</label>
+                    <input type="number" class="form-control" id="customs_cost" name="customs_cost" 
+                           step="0.01" min="0" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label for="preparation_cost" class="form-label">Klargøring</label>
+                    <input type="number" class="form-control" id="preparation_cost" name="preparation_cost" 
+                           step="0.01" min="0" value="500">
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="other_costs" class="form-label">Øvrige omkostninger</label>
+                    <input type="number" class="form-control" id="other_costs" name="other_costs" 
+                           step="0.01" min="0" value="0">
+                </div>
+            </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3">Prisfastsættelse</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label for="selling_price" class="form-label">Salgspris (vejledende)</label>
+                    <input type="number" class="form-control" id="selling_price" name="selling_price" 
+                           step="0.01" min="0">
+                </div>
+                <div class="col-md-4">
+                    <label for="dealer_price" class="form-label">Forhandlerpris</label>
+                    <input type="number" class="form-control" id="dealer_price" name="dealer_price" 
+                           step="0.01" min="0">
+                </div>
+                <div class="col-md-4">
+                    <label for="private_price" class="form-label">Privatpris</label>
+                    <input type="number" class="form-control" id="private_price" name="private_price" 
+                           step="0.01" min="0">
+                </div>
+            </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3">Status & Detaljer</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status *</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="ordered">Bestilt</option>
+                        <option value="in_transit">Undervejs</option>
+                        <option value="arrived">Ankommet</option>
+                        <option value="in_preparation">Under klargøring</option>
+                        <option value="available">Tilgængelig</option>
+                        <option value="reserved">Reserveret</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="equipment" class="form-label">Udstyr</label>
+                    <textarea class="form-control" id="equipment" name="equipment" rows="3" 
+                              placeholder="Læderindtræk, Navigation, Klimaanlæg..."></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label for="condition_notes" class="form-label">Tilstandsnoter</label>
+                    <textarea class="form-control" id="condition_notes" name="condition_notes" rows="3" 
+                              placeholder="Småridser på bagklap..."></textarea>
+                </div>
+            </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Gem Bil
+                        </button>
+                        <a href="{{ url_for('cars.list_cars') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Annuller
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card position-sticky" style="top: 88px;">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Oversigt</h5>
+                <span class="badge bg-primary" id="progressBadge">0% udfyldt</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between"><span class="text-muted">Kostpris</span><strong id="summaryCost">0 DKK</strong></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted">Vejledende pris</span><strong id="summaryListPrice">-</strong></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted">Fortjeneste</span><strong id="summaryProfit">-</strong></div>
+                </div>
+                <hr>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-secondary" type="button" id="autoFillDefaults">
+                        <i class="bi bi-lightning-charge me-2"></i>Udfyld standardfelter
+                    </button>
+                    <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('vin').focus()">
+                        <i class="bi bi-123 me-2"></i>Start ved VIN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Save ad_url to hidden field on form submit
+document.getElementById('carForm').addEventListener('submit', function(e) {
+    const urlInput = document.getElementById('ad_url_input');
+    const hiddenAdUrl = document.getElementById('ad_url');
+    if (urlInput && urlInput.value && hiddenAdUrl) {
+        hiddenAdUrl.value = urlInput.value;
+    }
+});
+
+// Skip parse button - just save the URL and scroll to form
+document.getElementById('skipParseBtn').addEventListener('click', function() {
+    const urlInput = document.getElementById('ad_url_input');
+    const hiddenAdUrl = document.getElementById('ad_url');
+    const statusDiv = document.getElementById('parseStatus');
+    
+    if (urlInput && urlInput.value && hiddenAdUrl) {
+        hiddenAdUrl.value = urlInput.value;
+        statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Link gemt - udfyld felterne nedenfor</div>';
+    }
+    
+    // Scroll to VIN field
+    document.getElementById('vin').focus();
+    document.getElementById('vin').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+document.getElementById('parseBtn').addEventListener('click', async function() {
+    const fileInput = document.getElementById('adImage');
+    const urlInput = document.getElementById('ad_url_input');
+    const statusDiv = document.getElementById('parseStatus');
+    
+    if ((!fileInput.files || !fileInput.files[0]) && !urlInput.value) {
+        statusDiv.innerHTML = '<div class="alert alert-warning">Vælg venligst et billede/PDF eller indsæt et link først</div>';
+        return;
+    }
+    
+    // Show loading
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyserer...';
+    statusDiv.innerHTML = '<div class="alert alert-info">Henter og analyserer data...</div>';
+    
+    // Create form data
+    const formData = new FormData();
+    if (fileInput.files && fileInput.files[0]) {
+        formData.append('ad_image', fileInput.files[0]);
+    }
+    if (urlInput.value) {
+        formData.append('ad_url', urlInput.value);
+        // Also set the hidden ad_url field for saving with car
+        const hiddenAdUrl = document.getElementById('ad_url');
+        if (hiddenAdUrl) {
+            hiddenAdUrl.value = urlInput.value;
+        }
+    }
+    
+    try {
+        const response = await fetch('/cars/parse-ad', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server fejl');
+        }
+        
+        const data = await response.json();
+        
+        // Debug: Log data til konsol
+        console.log('OCR/URL Data modtaget:', data);
+        
+        if (data.error) {
+            if (data.blocked) {
+                let helpHtml = '<div class="alert alert-warning">' +
+                    '<i class="bi bi-exclamation-triangle me-2"></i>' +
+                    '<strong>' + data.error + '</strong><br><br>' +
+                    '<small>' + (data.help_text || '').replace(/\n/g, '<br>') + '</small><br><br>' +
+                    '<strong class="text-success">✓ Linket er gemt</strong> - du kan nu udfylde felterne manuelt nedenfor.' +
+                    '</div>';
+                statusDiv.innerHTML = helpHtml;
+                // Scroll to form
+                setTimeout(() => {
+                    document.getElementById('vin').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 1000);
+            } else {
+                statusDiv.innerHTML = '<div class="alert alert-danger">Fejl: ' + data.error + '</div>';
+            }
+        } else {
+            // Populate form fields (only if they exist)
+            if (data.vin) document.getElementById('vin').value = data.vin;
+            if (data.make) document.getElementById('make').value = data.make;
+            if (data.model) document.getElementById('model').value = data.model;
+            if (data.year) document.getElementById('year').value = data.year;
+            if (data.color && document.getElementById('color')) document.getElementById('color').value = data.color;
+            if (data.mileage) document.getElementById('mileage').value = data.mileage;
+            if (data.price) document.getElementById('purchase_price').value = data.price;
+            if (data.purchase_currency) document.getElementById('purchase_currency').value = data.purchase_currency;
+            if (data.import_country) document.getElementById('import_country').value = data.import_country;
+            
+            // Set dealer information
+            if (data.dealer) {
+                const dealerField = document.getElementById('dealer_name');
+                if (dealerField) {
+                    dealerField.value = data.dealer;
+                }
+            }
+            if (data.location) {
+                const locationField = document.getElementById('dealer_location');
+                if (locationField) {
+                    locationField.value = data.location;
+                }
+            }
+            if (data.distance_km) {
+                const distanceField = document.getElementById('distance_km');
+                if (distanceField) {
+                    distanceField.value = data.distance_km;
+                    // Trigger change event to calculate transport cost
+                    distanceField.dispatchEvent(new Event('input'));
+                }
+            }
+            
+            // Set default preparation cost to 500 DKK
+            document.getElementById('preparation_cost').value = 500;
+            
+            // Set transport cost if calculated (and not already set by distance event)
+            if (data.transport_cost && (!document.getElementById('transport_cost').value || document.getElementById('transport_cost').value == '0')) {
+                document.getElementById('transport_cost').value = data.transport_cost;
+            }
+            
+            // Add equipment if present
+            if (data.equipment) {
+                const equipField = document.getElementById('equipment');
+                if (equipField) {
+                    equipField.value = data.equipment;
+                }
+            }
+            
+            let foundFields = [];
+            if (data.vin) foundFields.push('VIN');
+            if (data.make) foundFields.push('Mærke');
+            if (data.model) foundFields.push('Model');
+            if (data.year) foundFields.push('Årgang');
+            if (data.color) foundFields.push('Farve');
+            if (data.mileage) foundFields.push('Kilometerstand');
+            if (data.price) foundFields.push('Pris');
+            if (data.purchase_currency) foundFields.push('Valuta (' + data.purchase_currency + ')');
+            if (data.import_country) foundFields.push('Importland');
+            if (data.dealer) foundFields.push('Forhandler');
+            if (data.location) foundFields.push('By');
+            if (data.distance_km) foundFields.push('Afstand (' + data.distance_km + ' km)');
+            if (data.transport_cost) foundFields.push('Transport (beregnet)');
+            if (data.equipment) foundFields.push('Udstyr');
+            
+            if (foundFields.length > 0) {
+                statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Fundet: ' + foundFields.join(', ') + '</div>';
+                updateSummary();
+                updateProgress();
+            } else {
+                statusDiv.innerHTML = '<div class="alert alert-warning">Ingen data kunne ekstraheres. Prøv et tydeligere billede eller link.</div>';
+            }
+        }
+    } catch (error) {
+        statusDiv.innerHTML = '<div class="alert alert-danger">Fejl: ' + error.message + '</div>';
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-magic me-2"></i>Ekstraher Data';
+    }
+});
+</script>
+<script>
+// Live summary and progress helpers
+function formatDKK(n){
+    try { return new Intl.NumberFormat('da-DK').format(Number(n||0)) + ' DKK'; } catch(e){ return (n||0) + ' DKK'; }
+}
+function formatCurrency(n, currency){
+    try { return new Intl.NumberFormat('da-DK').format(Number(n||0)) + ' ' + currency; } catch(e){ return (n||0) + ' ' + currency; }
+}
+function calculateNetPrice(){
+    const grossPrice = parseFloat(document.getElementById('purchase_price').value||0);
+    const discount = parseFloat(document.getElementById('discount').value||0);
+    const importCountry = document.getElementById('import_country').value.toLowerCase();
+    const currency = document.getElementById('purchase_currency').value || 'DKK';
+    
+    // Apply discount first
+    const priceAfterDiscount = grossPrice - discount;
+    
+    let vatRate = 0;
+    if (importCountry.includes('tyskland') || importCountry.includes('germany')) {
+        vatRate = 0.19; // 19% German VAT
+    } else if (importCountry.includes('sverige') || importCountry.includes('sweden')) {
+        vatRate = 0.25; // 25% Swedish VAT
+    }
+    
+    if (vatRate > 0 && priceAfterDiscount > 0) {
+        const netPrice = priceAfterDiscount / (1 + vatRate);
+        document.getElementById('net_price_value').textContent = formatCurrency(netPrice, currency);
+        document.getElementById('net_price_info').style.display = 'block';
+        return netPrice;
+    } else {
+        document.getElementById('net_price_info').style.display = 'none';
+        return priceAfterDiscount;
+    }
+}
+function computeTotal(){
+    const netPrice = calculateNetPrice();
+    const currency = document.getElementById('purchase_currency').value || 'DKK';
+    
+    // Convert to DKK
+    let rate = 1.0;
+    if (currency.toUpperCase() === 'EUR') rate = 7.4685;
+    else if (currency.toUpperCase() === 'SEK') rate = 0.685;
+    
+    const purchaseDKK = netPrice * rate;
+    const transport = parseFloat(document.getElementById('transport_cost').value||0);
+    const customs = parseFloat(document.getElementById('customs_cost').value||0);
+    const prep = parseFloat(document.getElementById('preparation_cost').value||0);
+    const other = parseFloat(document.getElementById('other_costs').value||0);
+    return purchaseDKK + transport + customs + prep + other;
+}
+function updateSummary(){
+    const total = computeTotal();
+    const costEl = document.getElementById('summaryCost'); if(costEl) costEl.textContent = formatDKK(total);
+    const sp = parseFloat(document.getElementById('selling_price').value||0);
+    const lpEl = document.getElementById('summaryListPrice');
+    const pfEl = document.getElementById('summaryProfit');
+    if(sp>0){
+        if(lpEl) lpEl.textContent = formatDKK(sp);
+        if(pfEl) pfEl.textContent = formatDKK(sp - total);
+    } else {
+        if(lpEl) lpEl.textContent = '-';
+        if(pfEl) pfEl.textContent = '-';
+    }
+}
+function updateProgress(){
+    const requiredIds = ['vin','make','model','year','import_country','purchase_price','status'];
+    let filled = 0;
+    requiredIds.forEach(id=>{ const el = document.getElementById(id); if(el && el.value && String(el.value).trim().length>0) filled++; });
+    const pct = Math.round((filled/requiredIds.length)*100);
+    const badge = document.getElementById('progressBadge'); if(badge) badge.textContent = `${pct}% udfyldt`;
+}
+['purchase_price','transport_cost','customs_cost','preparation_cost','other_costs','selling_price'].forEach(id=>{
+    const el = document.getElementById(id); if(el){ el.addEventListener('input', updateSummary); }
+});
+['vin','make','model','year','import_country','purchase_price','status'].forEach(id=>{
+    const el = document.getElementById(id); if(el){ el.addEventListener('input', updateProgress); el.addEventListener('change', updateProgress); }
+});
+// Add listeners for net price calculation
+['purchase_price','discount','purchase_currency','import_country'].forEach(id=>{
+    const el = document.getElementById(id); if(el){ el.addEventListener('input', calculateNetPrice); el.addEventListener('change', calculateNetPrice); }
+});
+updateSummary();
+updateProgress();
+
+// Quick defaults
+const defaultsBtn = document.getElementById('autoFillDefaults');
+if(defaultsBtn){
+    defaultsBtn.addEventListener('click', function(){
+        const prep = document.getElementById('preparation_cost'); if(prep && (!prep.value || Number(prep.value)===0)) prep.value = 500;
+        const currency = document.getElementById('purchase_currency'); if(currency && !currency.value) currency.value='DKK';
+        updateSummary();
+    });
+}
+
+// Auto-calculate transport cost based on distance (simple rate: 6 DKK/km round trip)
+const distanceInput = document.getElementById('distance_km');
+const transportInput = document.getElementById('transport_cost');
+const customsInput = document.getElementById('customs_cost');
+if(distanceInput && transportInput){
+    distanceInput.addEventListener('input', function(){
+        const km = parseFloat(this.value || 0);
+        if(km > 0){
+            // Diesel: 13 km/l, diesel price ~12.5 DKK/l
+            // Total km = round trip = km * 2
+            // Fuel needed = (km * 2) / 13
+            // Cost = fuelNeeded * 12.5 DKK
+            const totalKm = km * 2;
+            const fuelNeeded = totalKm / 13;
+            const transportCost = Math.round(fuelNeeded * 12.5);
+            transportInput.value = transportCost;
+            
+            // Customs: 2000 DKK if >= 2000 km, else 1500 DKK
+            if(customsInput){
+                customsInput.value = km >= 2000 ? 2000 : 1500;
+            }
+            
+            updateSummary();
+        }
+    });
+}
+
+</script>
+{% endblock %}

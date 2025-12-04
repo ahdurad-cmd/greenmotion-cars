@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Administration{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4"><i class="bi bi-gear"></i> System Administration</h1>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-people"></i> Brugere</h5>
+                    <p class="card-text">Administrer systembrugere, roller og adgang</p>
+                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-primary">Administrer Brugere</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-building"></i> Firmainformation</h5>
+                    <p class="card-text">Rediger firma- og bankoplysninger til fakturaer</p>
+                    <a href="{{ url_for('admin.company_settings') }}" class="btn btn-primary">Rediger Firmainformation</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ sale.sale_number }}{% endblock %}
+{% block content %}
+<h1>Salg {{ sale.sale_number }}</h1>
+<div class="row g-4">
+<div class="col-md-8">
+<div class="card mb-3">
+<div class="card-body">
+<h5>Bil</h5>
+<p><a href="{{ url_for('cars.view_car', car_id=sale.car.id) }}">{{ sale.car.make }} {{ sale.car.model }}</a></p>
+<h5>Kunde</h5>
+<p><a href="{{ url_for('customers.view_customer', customer_id=sale.customer.id) }}">{{ sale.customer.name }}</a></p>
+<h5>Status</h5>
+<p><span class="badge bg-info">{{ sale.status }}</span></p>
+</div>
+</div>
+</div>
+<div class="col-md-4">
+<div class="card">
+<div class="card-body">
+<h5>Priser</h5>
+<p><strong>Listepris:</strong> {{ "{:,.0f}".format(sale.list_price) }} DKK</p>
+{% if sale.offered_price %}<p><strong>Tilbud:</strong> {{ "{:,.0f}".format(sale.offered_price) }} DKK</p>{% endif %}
+{% if sale.final_price %}<p><strong>Endelig:</strong> {{ "{:,.0f}".format(sale.final_price) }} DKK</p>{% endif %}
+<a href="{{ url_for('sales.edit_sale', sale_id=sale.id) }}" class="btn btn-primary mt-3">Rediger</a>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}

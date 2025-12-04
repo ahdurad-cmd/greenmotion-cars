@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Fakturaer{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-receipt"></i> Fakturaer</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('invoices.create_invoice') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ny Faktura
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total</h6>
+                    <h3 class="card-title mb-0">{{ stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning bg-opacity-10">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Kladder</h6>
+                    <h3 class="card-title mb-0">{{ stats.draft }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info bg-opacity-10">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Sendt</h6>
+                    <h3 class="card-title mb-0">{{ stats.sent }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success bg-opacity-10">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Betalt</h6>
+                    <h3 class="card-title mb-0">{{ stats.paid }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Søg fakturanummer eller kunde..." value="{{ search }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">Alle status</option>
+                        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Kladde</option>
+                        <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>Sendt</option>
+                        <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Betalt</option>
+                        <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Forfald</option>
+                        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Annulleret</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Søg
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-secondary w-100">
+                        <i class="bi bi-x-circle"></i> Nulstil
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if invoices.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fakturanr.</th>
+                            <th>Kunde</th>
+                            <th>Dato</th>
+                            <th>Forfaldsdato</th>
+                            <th>Beløb</th>
+                            <th>Status</th>
+                            <th>Handlinger</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices.items %}
+                        <tr class="{% if invoice.is_overdue() and invoice.status != 'paid' %}table-danger{% endif %}">
+                            <td>
+                                <a href="{{ url_for('invoices.invoice_detail', id=invoice.id) }}" class="text-decoration-none">
+                                    <strong>{{ invoice.invoice_number }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ invoice.get_customer_name() }}</td>
+                            <td>{{ invoice.invoice_date.strftime('%d-%m-%Y') }}</td>
+                            <td>
+                                {{ invoice.due_date.strftime('%d-%m-%Y') }}
+                                {% if invoice.is_overdue() and invoice.status != 'paid' %}
+                                <span class="badge bg-danger">Forfald</span>
+                                {% elif invoice.days_until_due() <= 3 and invoice.status == 'sent' %}
+                                <span class="badge bg-warning">{{ invoice.days_until_due() }} dage</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ '{:,.2f}'.format(invoice.total_amount) }}</strong>
+                                <span class="badge bg-light text-muted border" style="font-weight:600;">{{ invoice.purchase_currency }}</span>
+                            </td>
+                            <td>
+                                {% if invoice.status == 'draft' %}
+                                <span class="badge bg-secondary">Kladde</span>
+                                {% elif invoice.status == 'sent' %}
+                                <span class="badge bg-info">Sendt</span>
+                                {% elif invoice.status == 'paid' %}
+                                <span class="badge bg-success">Betalt</span>
+                                {% elif invoice.status == 'overdue' %}
+                                <span class="badge bg-danger">Forfald</span>
+                                {% elif invoice.status == 'cancelled' %}
+                                <span class="badge bg-dark">Annulleret</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('invoices.invoice_detail', id=invoice.id) }}" class="btn btn-outline-primary" title="Vis">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if invoice.status != 'paid' %}
+                                    <a href="{{ url_for('invoices.edit_invoice', id=invoice.id) }}" class="btn btn-outline-warning" title="Rediger">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('invoices.print_invoice', id=invoice.id) }}" class="btn btn-outline-secondary" target="_blank" title="Print">
+                                        <i class="bi bi-printer"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if invoices.pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not invoices.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('invoices.list_invoices', page=invoices.prev_num, status=status_filter, search=search) }}">Forrige</a>
+                    </li>
+                    {% for page_num in invoices.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == invoices.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('invoices.list_invoices', page=page_num, status=status_filter, search=search) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not invoices.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('invoices.list_invoices', page=invoices.next_num, status=status_filter, search=search) }}">Næste</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-receipt text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">Ingen fakturaer fundet</h4>
+                <p class="text-muted">Opret din første faktura for at komme i gang</p>
+                <a href="{{ url_for('invoices.create_invoice') }}" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-circle"></i> Opret Faktura
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

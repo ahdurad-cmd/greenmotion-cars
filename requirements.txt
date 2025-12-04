@@ -1,0 +1,38 @@
+# Core Framework
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.1
+Flask-Login>=0.6.3
+Flask-WTF>=1.2.1
+Flask-Mail>=0.9.1
+Flask-Migrate>=4.0.5
+Flask-Caching>=2.1.0
+
+# Database
+WTForms>=3.1.1
+SQLAlchemy>=2.0.35
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+
+# Forms & Validation
+email-validator>=2.1.0
+python-dotenv>=1.0.0
+Werkzeug>=3.0.1
+
+# OCR & Document Processing
+Pillow>=10.0.0
+pytesseract>=0.3.10
+pdf2image>=1.17.0
+PyPDF2>=3.0.0
+
+# Web Scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# Caching & Background Tasks
+redis>=5.0.1
+celery>=5.3.4
+
+# Production Server
+gunicorn>=21.2.0

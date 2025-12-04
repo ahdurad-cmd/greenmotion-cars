@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Salg{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+<h1>Salg</h1>
+<a href="{{ url_for('sales.add_sale') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nyt Salg</a>
+</div>
+<div class="card"><div class="card-body">
+{% if sales.items %}
+<table class="table"><thead><tr><th>Salg#</th><th>Kunde</th><th>Bil</th><th>Pris</th><th>Status</th><th></th></tr></thead>
+<tbody>
+{% for sale in sales.items %}
+<tr>
+<td><a href="{{ url_for('sales.view_sale', sale_id=sale.id) }}">{{ sale.sale_number }}</a></td>
+<td>{{ sale.customer.name }}</td>
+<td>{{ sale.car.make }} {{ sale.car.model }}</td>
+<td>{{ "{:,.0f}".format(sale.final_price or sale.offered_price or sale.list_price) }} DKK</td>
+<td><span class="badge bg-info">{{ sale.status }}</span></td>
+<td><a href="{{ url_for('sales.view_sale', sale_id=sale.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+</tr>
+{% endfor %}
+</tbody></table>
+{% else %}
+<p class="text-center text-muted">Ingen salg endnu</p>
+{% endif %}
+</div></div>
+{% endblock %}

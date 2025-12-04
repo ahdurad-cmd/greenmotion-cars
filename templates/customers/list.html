@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Kunder - GreenMotion Cars{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <h1 class="mb-0">Kunder</h1>
+        {% if customers.total is defined %}
+        <span class="pill-counter"><span class="dot"></span> {{ customers.total }} i alt</span>
+        {% endif %}
+    </div>
+    <a href="{{ url_for('customers.add_customer') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Tilføj Kunde
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('customers.list_customers') }}" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="search" placeholder="Søg (navn, email, CVR)" 
+                       value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="type">
+                    <option value="">Alle typer</option>
+                    <option value="dealer" {% if request.args.get('type') == 'dealer' %}selected{% endif %}>Forhandlere</option>
+                    <option value="private" {% if request.args.get('type') == 'private' %}selected{% endif %}>Private</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-search me-2"></i>Søg
+                </button>
+                <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>Nulstil
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if customers.items %}
+        <div class="table-responsive">
+            <table class="table table-hover table-dense">
+                <thead>
+                    <tr>
+                        <th>Navn</th>
+                        <th>Type</th>
+                        <th>Kontakt</th>
+                        <th>Køb</th>
+                        <th>Handlinger</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:36px;height:36px;font-size:0.8rem;">
+                                    {{ customer.name[:2]|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ customer.name }}</strong><br>
+                                    {% if customer.customer_type == 'dealer' and customer.cvr %}
+                                    <small class="text-muted">CVR: {{ customer.cvr }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if customer.customer_type == 'dealer' %}
+                                <span class="badge badge-soft-blue">Forhandler</span>
+                            {% else %}
+                                <span class="badge badge-soft-green">Privat</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>
+                                {{ customer.email }}<br>
+                                {{ customer.phone }}
+                            </small>
+                        </td>
+                        <td>{{ customer.total_purchases() }}</td>
+                        <td>
+                            <a href="{{ url_for('customers.view_customer', customer_id=customer.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if customers.pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if customers.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('customers.list_customers', page=customers.prev_num) }}">Forrige</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in customers.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == customers.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('customers.list_customers', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if customers.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('customers.list_customers', page=customers.next_num) }}">Næste</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <p class="text-muted mt-3">Ingen kunder fundet</p>
+            <a href="{{ url_for('customers.add_customer') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Tilføj første kunde
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+
+{% block title %}Rediger Faktura {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-receipt"></i> Rediger Faktura {{ invoice.invoice_number }}</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('invoices.invoice_detail', id=invoice.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Tilbage
+            </a>
+        </div>
+    </div>
+
+    <form method="POST" id="invoiceForm">
+        <div class="row">
+            <!-- Left Column - Customer Info -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Kundeoplysninger</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Vælg eksisterende kunde (valgfrit)</label>
+                            <select class="form-select" id="customer_id" name="customer_id">
+                                <option value="">-- Indtast manuelt --</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if invoice.customer_id == customer.id %}selected{% endif %}>{{ customer.name }} {% if customer.cvr %}(CVR: {{ customer.cvr }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Eller indtast kundeoplysninger manuelt nedenfor</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Kundenavn *</label>
+                            <input type="text" class="form-control" name="customer_name" id="customer_name" value="{{ invoice.customer_name or (invoice.customer.name if invoice.customer else '') }}" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="customer_email" id="customer_email" value="{{ invoice.customer_email or (invoice.customer.email if invoice.customer else '') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Telefon</label>
+                                <input type="text" class="form-control" name="customer_phone" id="customer_phone" value="{{ invoice.customer_phone or (invoice.customer.phone if invoice.customer else '') }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Adresse</label>
+                            <input type="text" class="form-control" name="customer_address" id="customer_address" value="{{ invoice.customer_address or (invoice.customer.address if invoice.customer else '') }}">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Postnummer</label>
+                                <input type="text" class="form-control" name="customer_postal_code" id="customer_postal_code" value="{{ invoice.customer_postal_code or (invoice.customer.postal_code if invoice.customer else '') }}">
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">By</label>
+                                <input type="text" class="form-control" name="customer_city" id="customer_city" value="{{ invoice.customer_city or (invoice.customer.city if invoice.customer else '') }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Land</label>
+                                <input type="text" class="form-control" name="customer_country" id="customer_country" value="{{ invoice.customer_country or (invoice.customer.country if invoice.customer else 'Danmark') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CVR nummer</label>
+                                <input type="text" class="form-control" name="customer_cvr" id="customer_cvr" value="{{ invoice.customer_cvr or (invoice.customer.cvr if invoice.customer else '') }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Invoice Details -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Fakturaoplysninger</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Afsendende firma</label>
+                            <select class="form-select" name="issuing_company_id">
+                                <option value="" {% if not invoice.issuing_company_id %}selected{% endif %}>Default (Global Settings)</option>
+                                {% for c in companies %}
+                                <option value="{{ c.id }}" {% if invoice.issuing_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Vælg hvilket firma denne faktura udsendes fra</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fakturanummer</label>
+                            <input type="text" class="form-control" name="invoice_number" value="{{ invoice.invoice_number }}" placeholder="F.eks. GM-2025-001">
+                            <small class="text-muted">Du kan tilpasse fakturanummeret her</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fakturadato *</label>
+                            <input type="date" class="form-control" name="invoice_date" value="{{ invoice.invoice_date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Valuta *</label>
+                            <select class="form-select" name="purchase_currency" required>
+                                <option value="DKK" {% if invoice.purchase_currency == 'DKK' %}selected{% endif %}>DKK</option>
+                                <option value="EUR" {% if invoice.purchase_currency == 'EUR' %}selected{% endif %}>EUR</option>
+                                <option value="SEK" {% if invoice.purchase_currency == 'SEK' %}selected{% endif %}>SEK</option>
+                            </select>
+                            <small class="text-muted">Valuta for denne faktura</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Betalingsbetingelser (dage) *</label>
+                            <input type="number" class="form-control" name="payment_terms" id="payment_terms" value="{{ invoice.payment_terms }}" min="0" max="365" required>
+                            <small class="text-muted">Antal dage til betaling skal være modtaget</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Momssats (%) *</label>
+                            <input type="number" class="form-control" name="vat_rate" value="{{ invoice.vat_rate }}" min="0" max="100" step="0.01" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Noter (vises på faktura)</label>
+                            <textarea class="form-control" name="notes" rows="3" placeholder="F.eks. betalingsinstruktioner, tak for din ordre...">{{ invoice.notes or '' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Interne noter (vises ikke på faktura)</label>
+                            <textarea class="form-control" name="internal_notes" rows="2" placeholder="Interne bemærkninger...">{{ invoice.internal_notes or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Fakturaposter</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="addTextLine()" title="Tilføj tekstlinje uden beløb">
+                        <i class="bi bi-text-left"></i> Tekstlinje
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addLineItem()">
+                        <i class="bi bi-plus-circle"></i> Tilføj post
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table" id="lineItemsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%;">Beskrivelse *</th>
+                                <th style="width: 10%;">Antal</th>
+                                <th style="width: 15%;">Enhedspris</th>
+                                <th style="width: 10%;">Rabat (%)</th>
+                                <th style="width: 15%;">Total</th>
+                                <th style="width: 10%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lineItemsBody">
+                            {% for item in line_items %}
+                            <tr class="line-item-row">
+                                <td><input type="text" class="form-control" name="line_description[]" value="{{ item.description }}" placeholder="F.eks. 'BMW 320d' eller tekstlinje" required></td>
+                                <td><input type="number" class="form-control line-quantity" name="line_quantity[]" value="{% if item.quantity %}{{ item.quantity }}{% endif %}" min="0" step="0.01" placeholder="Valgfrit"></td>
+                                <td><input type="number" class="form-control line-unit-price" name="line_unit_price[]" value="{% if item.unit_price %}{{ item.unit_price }}{% endif %}" min="0" step="0.01" placeholder="Valgfrit"></td>
+                                <td><input type="number" class="form-control line-discount" name="line_discount[]" value="{{ item.discount_percentage }}" min="0" max="100" step="0.01"></td>
+                                <td><strong class="line-total">{% if item.quantity and item.unit_price %}{{ '{:.2f}'.format(item.total()) }} kr.{% else %}-{% endif %}</strong></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)" {% if loop.first and loop.length == 1 %}disabled{% endif %}>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                <td colspan="2"><strong id="subtotalDisplay">0.00 kr.</strong></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Moms (25%):</strong></td>
+                                <td colspan="2"><strong id="vatDisplay">0.00 kr.</strong></td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                <td colspan="2"><strong id="subtotalDisplay">{{ '%.2f' % invoice.subtotal }}</strong></td>
+                            </tr>
+                        </tfoot>
+                                <td colspan="4" class="text-end"><strong>Moms ({{ invoice.vat_rate }}%):</strong></td>
+                                <td colspan="2"><strong id="vatDisplay">{{ '%.2f' % invoice.vat_amount }}</strong></td>
+            </div>
+        </div>
+                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                <td colspan="2"><strong id="totalDisplay">{{ '%.2f' % invoice.total_amount }}</strong></td>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('invoices.invoice_detail', id=invoice.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuller
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Gem Ændringer
+                    </button>
+                </div>  <i class="bi bi-save"></i> Gem Faktura
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-fill customer data when selecting from dropdown
+document.getElementById('customer_id').addEventListener('change', function() {
+    const customerId = this.value;
+    if (customerId) {
+        fetch(`/invoices/api/customer/${customerId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('customer_name').value = data.name || '';
+                document.getElementById('customer_email').value = data.email || '';
+                document.getElementById('customer_phone').value = data.phone || '';
+                document.getElementById('customer_address').value = data.address || '';
+                document.getElementById('customer_postal_code').value = data.postal_code || '';
+                document.getElementById('customer_city').value = data.city || '';
+                document.getElementById('customer_country').value = data.country || 'Danmark';
+                document.getElementById('customer_cvr').value = data.cvr || '';
+                document.getElementById('payment_terms').value = data.payment_terms || 14;
+            });
+    }
+});
+
+// Calculate line item totals
+function calculateLineTotal(row) {
+    const quantity = parseFloat(row.querySelector('.line-quantity').value);
+    const unitPrice = parseFloat(row.querySelector('.line-unit-price').value);
+    const discount = parseFloat(row.querySelector('.line-discount').value) || 0;
+    
+    // If either quantity or unit price is missing, treat as text line
+    if (isNaN(quantity) || isNaN(unitPrice)) {
+        row.querySelector('.line-total').textContent = '-';
+        calculateTotals();
+        return;
+    }
+    
+    const subtotal = quantity * unitPrice;
+    const discountAmount = subtotal * (discount / 100);
+    const total = subtotal - discountAmount;
+    
+    row.querySelector('.line-total').textContent = total.toFixed(2);
+    
+    calculateTotals();
+}
+
+// Calculate invoice totals
+function calculateTotals() {
+    let subtotal = 0;
+    document.querySelectorAll('.line-item-row').forEach(row => {
+        const quantity = parseFloat(row.querySelector('.line-quantity').value);
+        const unitPrice = parseFloat(row.querySelector('.line-unit-price').value);
+        const discount = parseFloat(row.querySelector('.line-discount').value) || 0;
+        
+        // Skip text lines (lines without quantity or price)
+        if (isNaN(quantity) || isNaN(unitPrice)) {
+            return;
+        }
+        
+        const lineSubtotal = quantity * unitPrice;
+        const discountAmount = lineSubtotal * (discount / 100);
+        subtotal += (lineSubtotal - discountAmount);
+    });
+    
+    const vatRate = parseFloat(document.querySelector('[name="vat_rate"]').value) || 25;
+    const vat = subtotal * (vatRate / 100);
+    const total = subtotal + vat;
+    
+    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2);
+    document.getElementById('vatDisplay').textContent = vat.toFixed(2);
+    document.getElementById('totalDisplay').textContent = total.toFixed(2);
+}
+
+// Add line item
+function addLineItem() {
+    const tbody = document.getElementById('lineItemsBody');
+    const newRow = tbody.rows[0].cloneNode(true);
+    
+    // Clear values
+    newRow.querySelectorAll('input').forEach(input => {
+        if (input.name === 'line_discount[]') input.value = '0';
+        else input.value = '';
+    });
+    
+    // Reset line total
+    newRow.querySelector('.line-total').textContent = '-';
+    
+    // Enable delete button
+    newRow.querySelector('button').disabled = false;
+    
+    tbody.appendChild(newRow);
+    
+    // Add event listeners
+    newRow.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            calculateLineTotal(newRow);
+        });
+    });
+    
+    // Focus on description field
+    newRow.querySelector('[name="line_description[]"]').focus();
+}
+
+// Add text-only line (no amount/price)
+function addTextLine() {
+    const tbody = document.getElementById('lineItemsBody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td colspan="5">
+            <input type="text" class="form-control" name="line_description[]" placeholder="Tekstlinje (kun tekst)" required>
+            <input type="hidden" name="line_quantity[]" value="">
+            <input type="hidden" name="line_unit_price[]" value="">
+            <input type="hidden" name="line_discount[]" value="0">
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    calculateTotals();
+}
+
+// Remove line item
+function removeLineItem(button) {
+    const row = button.closest('tr');
+    if (document.querySelectorAll('.line-item-row').length > 1) {
+        row.remove();
+        calculateTotals();
+    }
+}
+
+// Add event listeners to existing row
+document.querySelectorAll('.line-item-row').forEach(row => {
+    row.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            calculateLineTotal(row);
+        });
+    });
+});
+
+// Recalculate when VAT rate changes
+document.querySelector('[name="vat_rate"]').addEventListener('input', calculateTotals);
+
+// Initial calculation
+calculateTotals();
+</script>
+{% endblock %}

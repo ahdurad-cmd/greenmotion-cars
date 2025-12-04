@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h1>{{ event.title }}</h1>
+    <div>
+        {% if event.user_id == current_user.id or current_user.role in ['admin', 'manager'] %}
+        <a href="{{ url_for('calendar.edit_event', event_id=event.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Rediger
+        </a>
+        <form method="POST" action="{{ url_for('calendar.delete_event', event_id=event.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Er du sikker?')">
+                <i class="bi bi-trash"></i> Slet
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Detaljer</h5>
+                
+                <p><strong>Dato:</strong> {{ event.event_date.strftime('%d-%m-%Y') }}</p>
+                
+                {% if not event.is_all_day %}
+                <p><strong>Tid:</strong> 
+                    {% if event.start_time %}{{ event.start_time.strftime('%H:%M') }}{% endif %}
+                    {% if event.end_time %} - {{ event.end_time.strftime('%H:%M') }}{% endif %}
+                </p>
+                {% else %}
+                <p><strong>Hele dagen</strong></p>
+                {% endif %}
+                
+                <p><strong>Type:</strong> 
+                    <span class="badge bg-{{ 'primary' if event.event_type=='meeting' else 'info' if event.event_type=='delivery' else 'success' if event.event_type=='inspection' else 'secondary' }}">
+                        {{ event.event_type }}
+                    </span>
+                </p>
+                
+                {% if event.location %}
+                <p><strong>Lokation:</strong> {{ event.location }}</p>
+                {% endif %}
+                
+                {% if event.description %}
+                <hr>
+                <h6>Beskrivelse</h6>
+                <p class="text-muted">{{ event.description }}</p>
+                {% endif %}
+                
+                <hr>
+                <p class="small text-muted">
+                    Oprettet af {{ event.user.full_name }} den {{ event.created_at.strftime('%d-%m-%Y %H:%M') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        {% if event.car or event.customer or event.sale %}
+        <div class="card">
+            <div class="card-header"><h6>Tilknyttede Emner</h6></div>
+            <div class="card-body">
+                {% if event.car %}
+                <p><strong>Bil:</strong><br>
+                    <a href="{{ url_for('cars.view_car', car_id=event.car.id) }}">
+                        {{ event.car.make }} {{ event.car.model }}
+                    </a>
+                </p>
+                {% endif %}
+                
+                {% if event.customer %}
+                <p><strong>Kunde:</strong><br>
+                    <a href="{{ url_for('customers.view_customer', customer_id=event.customer.id) }}">
+                        {{ event.customer.name }}
+                    </a>
+                </p>
+                {% endif %}
+                
+                {% if event.sale %}
+                <p><strong>Salg:</strong><br>
+                    <a href="{{ url_for('sales.view_sale', sale_id=event.sale.id) }}">
+                        {{ event.sale.sale_number }}
+                    </a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <a href="{{ url_for('calendar.index') }}" class="btn btn-secondary w-100">
+                    <i class="bi bi-calendar"></i> Tilbage til Kalender
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

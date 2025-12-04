@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Tracking{% endblock %}
+{% block content %}
+<h1>Transport Tracking</h1>
+<div class="alert alert-warning mb-4">{{ delayed|length }} forsinkede forsendelser</div>
+<div class="card mb-4"><div class="card-header"><h5>Forsinkede</h5></div><div class="card-body">
+{% for entry in delayed %}
+<div class="alert alert-danger">{{ entry.car.make }} {{ entry.car.model }} - Forventet: {{ entry.estimated_arrival.strftime('%d-%m-%Y') }}</div>
+{% endfor %}
+</div></div>
+<div class="card"><div class="card-header"><h5>Til tiden</h5></div><div class="card-body">
+{% for entry in on_time %}
+<div class="p-2 border-bottom">{{ entry.car.make }} {{ entry.car.model }} - {{ entry.status }}</div>
+{% endfor %}
+</div></div>
+{% endblock %}

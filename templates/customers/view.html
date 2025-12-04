@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<h1>{{ customer.name }}</h1>
+<div class="card">
+<div class="card-body">
+<p><strong>Type:</strong> {{ 'Forhandler' if customer.customer_type == 'dealer' else 'Privat' }}</p>
+<p><strong>Email:</strong> {{ customer.email }}</p>
+<p><strong>Telefon:</strong> {{ customer.phone }}</p>
+{% if customer.cvr %}<p><strong>CVR:</strong> {{ customer.cvr }}</p>{% endif %}
+{% if customer.address %}<p><strong>Adresse:</strong> {{ customer.address }}, {{ customer.postal_code }} {{ customer.city }}</p>{% endif %}
+<p><strong>Antal køb:</strong> {{ customer.total_purchases() }}</p>
+<a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}" class="btn btn-primary">Rediger</a>
+<a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary">Tilbage</a>
+</div>
+</div>
+{% endblock %}

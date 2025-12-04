@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Kalender{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h1>Kalender - {{ ['Januar', 'Februar', 'Marts', 'April', 'Maj', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'December'][month-1] }} {{ year }}</h1>
+    <a href="{{ url_for('calendar.add_event') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Ny Begivenhed</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-3">
+            <a href="{{ url_for('calendar.index', year=prev_year, month=prev_month) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i> Forrige
+            </a>
+            <a href="{{ url_for('calendar.index') }}" class="btn btn-outline-primary">I dag</a>
+            <a href="{{ url_for('calendar.index', year=next_year, month=next_month) }}" class="btn btn-outline-secondary">
+                Næste <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+        
+        <table class="table table-bordered calendar-table">
+            <thead>
+                <tr>
+                    <th>Man</th>
+                    <th>Tir</th>
+                    <th>Ons</th>
+                    <th>Tor</th>
+                    <th>Fre</th>
+                    <th>Lør</th>
+                    <th>Søn</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set ns = namespace(day=1, started=False) %}
+                {% for week in range(6) %}
+                <tr>
+                    {% for weekday in range(7) %}
+                        {% set cell_index = week * 7 + weekday %}
+                        {% if not ns.started and weekday == first_day_weekday %}
+                            {% set ns.started = True %}
+                        {% endif %}
+                        
+                        {% if ns.started and ns.day <= days_in_month %}
+                            {% set current_date = '%04d-%02d-%02d'|format(year, month, ns.day) %}
+                            {% set day_events = events_by_date.get(current_date, []) %}
+                            {% set is_today = (year == today.year and month == today.month and ns.day == today.day) %}
+                            
+                            <td class="calendar-day {% if is_today %}bg-light{% endif %}" style="height: 100px; vertical-align: top; position: relative;">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ ns.day }}</strong>
+                                    <a href="{{ url_for('calendar.add_event', date=current_date) }}" class="text-success" title="Tilføj begivenhed">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </a>
+                                </div>
+                                <div class="mt-2">
+                                    {% for event in day_events[:3] %}
+                                        <a href="{{ url_for('calendar.view_event', event_id=event.id) }}" 
+                                           class="d-block small mb-1 badge bg-{{ 'primary' if event.event_type=='meeting' else 'info' if event.event_type=='delivery' else 'success' if event.event_type=='inspection' else 'secondary' }}"
+                                           title="{{ event.title }}">
+                                            {% if event.start_time %}{{ event.start_time.strftime('%H:%M') }} {% endif %}
+                                            {{ event.title[:20] }}{% if event.title|length > 20 %}...{% endif %}
+                                        </a>
+                                    {% endfor %}
+                                    {% if day_events|length > 3 %}
+                                        <a href="{{ url_for('calendar.day_view', date=current_date) }}" class="small text-muted">
+                                            +{{ day_events|length - 3 }} mere
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {% set ns.day = ns.day + 1 %}
+                        {% else %}
+                            <td class="calendar-day-empty"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5>Kommende Begivenheder</h5></div>
+    <div class="card-body">
+        {% set upcoming = events|selectattr('event_date', 'ge', today)|list %}
+        {% if upcoming %}
+            <div class="list-group">
+                {% for event in upcoming[:10] %}
+                <a href="{{ url_for('calendar.view_event', event_id=event.id) }}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ event.title }}</h6>
+                        <small>{{ event.event_date.strftime('%d-%m-%Y') }}</small>
+                    </div>
+                    {% if event.description %}
+                    <p class="mb-1 small text-muted">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                    <small>
+                        <span class="badge bg-{{ 'primary' if event.event_type=='meeting' else 'info' if event.event_type=='delivery' else 'success' if event.event_type=='inspection' else 'secondary' }}">
+                            {{ event.event_type }}
+                        </span>
+                        af {{ event.user.username }}
+                    </small>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted text-center">Ingen kommende begivenheder</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.calendar-table td {
+    padding: 8px;
+    cursor: pointer;
+}
+.calendar-table td:hover {
+    background-color: #f8f9fa;
+}
+.calendar-day-empty {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

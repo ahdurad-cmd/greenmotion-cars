@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Nyt Salg{% endblock %}
+{% block content %}
+<h1>Opret Nyt Salg</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3">
+<label>Bil *</label>
+<select name="car_id" class="form-select" required>
+<option value="">Vælg bil...</option>
+{% for car in cars %}
+<option value="{{ car.id }}">{{ car.make }} {{ car.model }} ({{ car.vin[:10] }}...)</option>
+{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label>Kunde *</label>
+<select name="customer_id" class="form-select" required>
+<option value="">Vælg kunde...</option>
+{% for customer in customers %}
+<option value="{{ customer.id }}">{{ customer.name }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label>Tilbudspris</label>
+<input type="number" name="offered_price" class="form-control" step="0.01">
+</div>
+<div class="mb-3">
+<label>Status</label>
+<select name="status" class="form-select">
+<option value="lead">Lead</option>
+<option value="offer_sent">Tilbud sendt</option>
+<option value="negotiation">Forhandling</option>
+</select>
+</div>
+<div class="mb-3">
+<label>Noter</label>
+<textarea name="notes" class="form-control" rows="3"></textarea>
+</div>
+<button type="submit" class="btn btn-primary">Opret Salg</button>
+<a href="{{ url_for('sales.list_sales') }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: greenmotion-cars
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: greenmotion-db
+          property: connectionString
+
+databases:
+  - name: greenmotion-db
+    plan: free

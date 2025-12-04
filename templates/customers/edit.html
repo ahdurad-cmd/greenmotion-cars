@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Rediger Kunde{% endblock %}
+{% block content %}
+<h1>Rediger {{ customer.name }}</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3">
+<label>Type</label>
+<select name="customer_type" class="form-select" required>
+<option value="dealer" {% if customer.customer_type=='dealer' %}selected{% endif %}>Forhandler</option>
+<option value="private" {% if customer.customer_type=='private' %}selected{% endif %}>Privat</option>
+</select>
+</div>
+<div class="mb-3"><label>Navn</label><input type="text" name="name" class="form-control" value="{{ customer.name }}" required></div>
+<div class="mb-3"><label>Email</label><input type="email" name="email" class="form-control" value="{{ customer.email }}" required></div>
+<div class="mb-3"><label>Telefon</label><input type="tel" name="phone" class="form-control" value="{{ customer.phone }}" required></div>
+<div class="mb-3"><label>CVR</label><input type="text" name="cvr" class="form-control" value="{{ customer.cvr or '' }}"></div>
+<div class="mb-3"><label>Adresse</label><input type="text" name="address" class="form-control" value="{{ customer.address or '' }}"></div>
+<div class="row g-3 mb-3">
+<div class="col-md-4"><label>Postnr</label><input type="text" name="postal_code" class="form-control" value="{{ customer.postal_code or '' }}"></div>
+<div class="col-md-8"><label>By</label><input type="text" name="city" class="form-control" value="{{ customer.city or '' }}"></div>
+</div>
+<button type="submit" class="btn btn-primary">Gem</button>
+<a href="{{ url_for('customers.view_customer', customer_id=customer.id) }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

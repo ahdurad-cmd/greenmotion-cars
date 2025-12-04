@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { margin: 0; }
+            /* Ensure single page output */
+            html, body { height: auto; }
+            .page-wrap { page-break-inside: avoid; }
+            /* Compact mode for print */
+            .invoice-title { font-size: 18px; margin: 14px 0 10px; }
+            .header { padding-bottom: 8px; margin-bottom: 12px; }
+            .info-section { margin-bottom: 12px; }
+            .info-box h3 { font-size: 12px; margin-bottom: 6px; }
+            .info-box p { margin: 2px 0; font-size: 11px; }
+            table { margin: 8px 0; }
+            table th { padding: 4px 5px; font-size: 10px; line-height: 1.25; }
+            table td { padding: 3px 5px; font-size: 10px; line-height: 1.25; }
+            table tbody tr:nth-child(even) td { background-color: #fff !important; }
+            table td[colspan="5"] { padding-top: 3px; padding-bottom: 3px; }
+            .payment-info h4 { font-size: 12px; padding: 8px 10px; }
+            .payment-info .grid { padding: 6px 8px; row-gap: 3px; }
+            .payment-info .label { font-size: 11px; }
+            .payment-info .value { font-size: 11px; }
+            .notes { display: none; }
+            .footer { margin-top: 16px; padding-top: 8px; }
+            .print-button { display: none !important; }
+            /* Tighten summary card */
+            .summary-card { min-width: 300px; }
+            .summary-card .row { margin-bottom: 6px; }
+            /* Limit notes height on print to avoid overflow */
+            .notes, .invoice-footer-notes { max-height: 120px; overflow: hidden; }
+        }
+
+        /* Force A4 single-page layout with controlled margins */
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            line-height: 1.6;
+            color: #111827;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 14mm;
+            background: #fafafa;
+        }
+        
+        .header {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-info {
+            text-align: right;
+        }
+        
+        .company-info h1 {
+            color: #667eea;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        
+        .invoice-title {
+            font-size: 24px;
+            color: #111827;
+            margin: 30px 0 20px 0;
+            letter-spacing: 0.4px;
+        }
+        
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .info-box {
+            flex: 1;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+        
+        table thead {
+            background-color: #f9fafb;
+        }
+        
+        table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+        
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        table tbody tr:nth-child(even) td {
+            background-color: #fcfcfc;
+        }
+        
+        table tfoot td {
+            font-weight: bold;
+            border-bottom: none;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .total-row {
+            background-color: #f9fafb;
+            font-size: 18px;
+        }
+        .total-row td:last-child {
+            font-weight: 700;
+            color: #111827;
+        }
+        
+        .notes {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-top: 30px;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .payment-info {
+            max-width: 100%;
+            margin: 0 auto;
+            text-align: left;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .payment-info h4 {
+            margin: 0;
+            color: #374151;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            background:#f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 14px;
+        }
+        .payment-info .grid {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            column-gap: 12px;
+            row-gap: 6px;
+            align-items: center;
+            padding: 12px 14px;
+        }
+        .payment-info .grid > div { padding: 2px 0; }
+        .payment-info .label {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .payment-info .value {
+            color: #111827;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            letter-spacing: 0.3px;
+            word-break: break-word;
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .print-button:hover {
+            background-color: #5568d3;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-paid { background-color: #d1fae5; color: #065f46; }
+        .status-sent { background-color: #dbeafe; color: #1e40af; }
+        .status-draft { background-color: #f3f4f6; color: #374151; }
+        .status-overdue { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Invoice
+    </button>
+
+    <div class="page-wrap">
+    <div class="header" style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px;">
+        <div>
+            {% set company = selected_company if selected_company else settings %}
+            {% set company_name = (company.company_name or company.name or '') %}
+            {% set is_nsg = 'nordic service group' in company_name|lower %}
+            <div style="font-weight:700; font-size:18px; color:#111827;">{{ company.company_name or company.name }}</div>
+            {% if company.company_address or company.address %}<div style="color:#6b7280;">{{ company.company_address or company.address }}</div>{% endif %}
+            {% if (company.company_postal_code or company.postal_code) or (company.company_city or company.city) %}
+            <div style="color:#6b7280;">{{ (company.company_postal_code or company.postal_code) }} {{ (company.company_city or company.city) }}</div>
+            {% endif %}
+            {% if company.company_country or company.country %}<div style="color:#6b7280;">{{ company.company_country or company.country }}</div>{% endif %}
+            {% if company.company_cvr or company.vat_no %}<div style="color:#6b7280;">VAT: {{ company.company_cvr or company.vat_no }}</div>{% endif %}
+            {% if company.company_vat %}<div style="color:#6b7280;">VAT Reg: {{ company.company_vat }}</div>{% endif %}
+            {% if company.company_email or company.email %}<div style="color:#6b7280;">Email: {{ company.company_email or company.email }}</div>{% endif %}
+            {% if company.company_phone or company.phone %}<div style="color:#6b7280;">Phone: {{ company.company_phone or company.phone }}</div>{% endif %}
+        </div>
+        <div style="text-align:right; min-width:220px;">
+            <div style="font-weight:600; color:#374151;">Invoice No.</div>
+            <div style="font-size:16px; color:#111827;">{{ invoice.invoice_number }}</div>
+            <div style="margin-top:10px; font-weight:600; color:#374151;">Invoice Date</div>
+            <div style="color:#111827;">{{ invoice.invoice_date.strftime('%d %b %Y') }}</div>
+            {% if invoice.due_date %}
+            <div style="margin-top:10px; font-weight:600; color:#374151;">Due Date</div>
+            <div style="color:#111827;">{{ invoice.due_date.strftime('%d %b %Y') }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2 class="invoice-title">INVOICE</h2>
+
+    <div class="info-section">
+        <div class="info-box">
+            <h3>Bill To</h3>
+            <p><strong>{{ invoice.get_customer_name() }}</strong></p>
+            {% for line in invoice.get_customer_address_lines() %}
+            {% if line.strip() %}
+            <p>{{ line }}</p>
+            {% endif %}
+            {% endfor %}
+            {% if invoice.customer_email or (invoice.customer and invoice.customer.email) %}
+            <p>{{ invoice.customer_email or invoice.customer.email }}</p>
+            {% endif %}
+            {% if invoice.customer_phone or (invoice.customer and invoice.customer.phone) %}
+            <p>{{ invoice.customer_phone or invoice.customer.phone }}</p>
+            {% endif %}
+            {% if invoice.customer_cvr or (invoice.customer and invoice.customer.cvr) %}
+            <p><strong>VAT:</strong> {{ invoice.customer_cvr or invoice.customer.cvr }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="info-box text-right">
+            <h3>Invoice Details</h3>
+            <p><strong>Invoice Number:</strong> {{ invoice.invoice_number }}</p>
+            <p><strong>Invoice Date:</strong> {{ invoice.invoice_date.strftime('%d-%m-%Y') }}</p>
+            <p><strong>Due Date:</strong> {{ invoice.due_date.strftime('%d-%m-%Y') }}</p>
+            <p><strong>Payment Terms:</strong> {{ invoice.payment_terms }} days</p>
+            <p>
+                <span class="status-badge 
+                    {% if invoice.status == 'paid' %}status-paid
+                    {% elif invoice.status == 'sent' %}status-sent
+                    {% elif invoice.status == 'draft' %}status-draft
+                    {% else %}status-overdue
+                    {% endif %}">
+                    {{ invoice.status }}
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 50%;">Description</th>
+                <th class="text-right" style="width: 12%;">Quantity</th>
+                <th class="text-right" style="width: 15%;">Unit Price</th>
+                <th class="text-right" style="width: 10%;">Discount</th>
+                <th class="text-right" style="width: 13%;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in line_items %}
+            <tr>
+                {% if item.quantity and item.unit_price and item.unit_price > 0 %}
+                    <td>{{ item.description }}</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(item.quantity) }}</td>
+                    <td class="text-right">{{ '{:,.2f}'.format(item.unit_price) }} {{ invoice.purchase_currency }}</td>
+                    <td class="text-right">
+                        {% if item.discount_percentage > 0 %}
+                        {{ '{:,.2f}'.format(item.discount_percentage) }}%
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ '{:,.2f}'.format(item.total()) }} {{ invoice.purchase_currency }}</td>
+                {% else %}
+                    <td colspan="5">{{ item.description }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+        
+    </table>
+
+    {% if invoice.notes %}
+    <div class="notes">
+        <strong>Notes:</strong><br>
+        {{ invoice.notes|replace('\n', '<br>')|safe }}
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 12px;">
+        <div style="display:flex; justify-content:flex-end;">
+            <div class="summary-card" style="min-width:340px; background:#ffffff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden;">
+                <div style="padding:10px 12px; background:#f9fafb; border-bottom:1px solid #e5e7eb; color:#374151; font-weight:600; letter-spacing:0.2px;">Summary</div>
+                <div style="padding:10px 12px;">
+                    <div class="row" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="color:#6b7280;">Subtotal</div>
+                        <div style="color:#111827; font-weight:600;">{{ '{:,.2f}'.format(invoice.subtotal) }}
+                            <span style="display:inline-block; padding:2px 8px; border:1px solid #e5e7eb; border-radius:14px; font-size:11px; font-weight:600; color:#6b7280; margin-left:6px;">{{ invoice.purchase_currency }}</span>
+                        </div>
+                    </div>
+                    <div class="row" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <div style="color:#6b7280;">VAT ({{ '{:,.2f}'.format(invoice.vat_rate) }}%)</div>
+                        <div style="color:#111827; font-weight:600;">{{ '{:,.2f}'.format(invoice.vat_amount) }}
+                            <span style="display:inline-block; padding:2px 8px; border:1px solid #e5e7eb; border-radius:14px; font-size:11px; font-weight:600; color:#6b7280; margin-left:6px;">{{ invoice.purchase_currency }}</span>
+                        </div>
+                    </div>
+                    <div style="border-top:1px dashed #e5e7eb; margin:10px 0;"></div>
+                    <div class="row" style="display:flex; align-items:center; justify-content:space-between;">
+                        <div style="color:#374151; font-weight:700;">Total</div>
+                        <div style="color:#111827; font-weight:800;">{{ '{:,.2f}'.format(invoice.total_amount) }}
+                            <span style="display:inline-block; padding:2px 8px; border:1px solid #d1d5db; border-radius:14px; font-size:11px; font-weight:700; color:#374151; margin-left:6px; background:#ffffff;">{{ invoice.purchase_currency }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if settings.invoice_footer_text %}
+    {% set footer_text = settings.invoice_footer_text %}
+    {% if is_nsg %}
+    {% set footer_text = footer_text|replace('This is a NETTO invoice without VAT.', '') %}
+    {% endif %}
+    {% if footer_text.strip() %}
+    <div class="notes">
+        {{ footer_text|replace('\n', '<br>')|safe }}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div class="footer">
+        <div class="payment-info">
+            <h4>Payment Information</h4>
+            <div class="grid">
+                {% set pay = company %}
+                {% if pay.bank_name %}
+                <div class="label">Bank</div>
+                <div class="value">{{ pay.bank_name }}</div>
+                {% endif %}
+                {% if pay.account_holder or company.company_name or company.name %}
+                <div class="label">Account Holder</div>
+                <div class="value">{{ pay.account_holder or company.company_name or company.name }}</div>
+                {% endif %}
+                {% if pay.bank_iban or pay.iban %}
+                <div class="label">IBAN</div>
+                <div class="value">{{ pay.bank_iban or pay.iban }}</div>
+                {% endif %}
+                {% if pay.bank_swift or pay.swift_bic %}
+                <div class="label">SWIFT/BIC</div>
+                <div class="value">{{ pay.bank_swift or pay.swift_bic }}</div>
+                {% endif %}
+                {% if pay.payment_note %}
+                <div class="label">Reference</div>
+                <div class="value">{{ pay.payment_note }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    </div> <!-- /.page-wrap -->
+</body>
+</html>

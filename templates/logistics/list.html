@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Logistik{% endblock %}
+{% block content %}
+<h1>Import Logistik</h1>
+<div class="card"><div class="card-body">
+{% if entries.items %}
+<table class="table"><thead><tr><th>Bil</th><th>Transport</th><th>Fra</th><th>Ankomst</th><th>Status</th><th></th></tr></thead>
+<tbody>
+{% for entry in entries.items %}
+<tr>
+<td><a href="{{ url_for('cars.view_car', car_id=entry.car.id) }}">{{ entry.car.make }} {{ entry.car.model }}</a></td>
+<td>{{ entry.transport_company or '-' }}</td>
+<td>{{ entry.origin_location or '-' }}</td>
+<td>{{ entry.estimated_arrival.strftime('%d-%m-%Y') if entry.estimated_arrival else '-' }}</td>
+<td><span class="badge bg-info">{{ entry.status }}</span></td>
+<td><a href="{{ url_for('logistics.view_logistics', logistics_id=entry.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+</tr>
+{% endfor %}
+</tbody></table>
+{% else %}
+<p class="text-center text-muted">Ingen logistik poster</p>
+{% endif %}
+</div></div>
+{% endblock %}

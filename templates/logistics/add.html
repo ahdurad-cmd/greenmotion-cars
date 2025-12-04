@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Logistik{% endblock %}
+{% block content %}
+<h1>Logistik for {{ car.make }} {{ car.model }}</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3"><label>Transportfirma</label><input type="text" name="transport_company" class="form-control"></div>
+<div class="mb-3"><label>Tracking nummer</label><input type="text" name="tracking_number" class="form-control"></div>
+<div class="mb-3"><label>Fra</label><input type="text" name="origin_location" class="form-control"></div>
+<div class="mb-3"><label>Til</label><input type="text" name="destination_location" class="form-control"></div>
+<div class="mb-3"><label>Forventet ankomst</label><input type="date" name="estimated_arrival" class="form-control"></div>
+<div class="mb-3"><label>Status</label>
+<select name="status" class="form-select">
+<option value="scheduled">Planlagt</option>
+<option value="picked_up">Afhentet</option>
+<option value="in_transit">Undervejs</option>
+<option value="arrived">Ankommet</option>
+</select>
+</div>
+<button type="submit" class="btn btn-primary">Gem</button>
+<a href="{{ url_for('cars.view_car', car_id=car.id) }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

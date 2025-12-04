@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}500 - Serverfejl{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="mb-4">
+                <i class="bi bi-exclamation-octagon text-danger" style="font-size: 5rem;"></i>
+            </div>
+            <h1 class="display-1 fw-bold text-danger">500</h1>
+            <h2 class="mb-4">Noget gik galt</h2>
+            <p class="lead text-muted mb-4">
+                Der opstod en intern serverfejl. Vi arbejder på at løse problemet hurtigst muligt.
+            </p>
+            <div class="alert alert-light border" role="alert">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Fejlen er blevet logget og vores team er blevet informeret.
+                </small>
+            </div>
+            <div class="d-flex gap-3 justify-content-center mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-house-door me-2"></i>Tilbage til forsiden
+                </a>
+                <a href="javascript:location.reload()" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Prøv igen
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

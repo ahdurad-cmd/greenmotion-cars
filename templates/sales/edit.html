@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Rediger Salg{% endblock %}
+{% block content %}
+<h1>Rediger {{ sale.sale_number }}</h1>
+<div class="card"><div class="card-body">
+<form method="POST">
+<div class="mb-3"><label>Status</label>
+<select name="status" class="form-select">
+<option value="lead" {% if sale.status=='lead' %}selected{% endif %}>Lead</option>
+<option value="offer_sent" {% if sale.status=='offer_sent' %}selected{% endif %}>Tilbud sendt</option>
+<option value="negotiation" {% if sale.status=='negotiation' %}selected{% endif %}>Forhandling</option>
+<option value="contract_signed" {% if sale.status=='contract_signed' %}selected{% endif %}>Kontrakt underskrevet</option>
+<option value="payment_pending" {% if sale.status=='payment_pending' %}selected{% endif %}>Afventer betaling</option>
+<option value="completed" {% if sale.status=='completed' %}selected{% endif %}>Gennemført</option>
+<option value="cancelled" {% if sale.status=='cancelled' %}selected{% endif %}>Annulleret</option>
+</select>
+</div>
+<div class="mb-3"><label>Tilbudspris</label><input type="number" name="offered_price" class="form-control" step="0.01" value="{{ sale.offered_price or '' }}"></div>
+<div class="mb-3"><label>Endelig pris</label><input type="number" name="final_price" class="form-control" step="0.01" value="{{ sale.final_price or '' }}"></div>
+<div class="mb-3"><label>Betalingsmetode</label>
+<select name="payment_method" class="form-select">
+<option value="">Vælg...</option>
+<option value="bank_transfer" {% if sale.payment_method=='bank_transfer' %}selected{% endif %}>Bankoverførsel</option>
+<option value="financing" {% if sale.payment_method=='financing' %}selected{% endif %}>Finansiering</option>
+<option value="cash" {% if sale.payment_method=='cash' %}selected{% endif %}>Kontant</option>
+</select>
+</div>
+<div class="mb-3"><label>Noter</label><textarea name="notes" class="form-control" rows="3">{{ sale.notes or '' }}</textarea></div>
+<button type="submit" class="btn btn-primary">Gem</button>
+<a href="{{ url_for('sales.view_sale', sale_id=sale.id) }}" class="btn btn-secondary">Annuller</a>
+</form>
+</div></div>
+{% endblock %}

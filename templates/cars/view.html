@@ -1,0 +1,962 @@
+{% extends "base.html" %}
+
+{% block title %}{{ car.make }} {{ car.model }} - GreenMotion Cars{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Car View Page Styles */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--gm-border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--gm-text-secondary); font-size: 0.9rem; }
+.info-value { font-weight: 600; color: var(--gm-text-main); text-align: right; }
+.info-value a { color: var(--gm-primary); }
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    font-size: 0.9rem;
+}
+.price-row.total {
+    border-top: 2px solid var(--gm-border);
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    font-weight: 700;
+    font-size: 1rem;
+}
+.price-label { color: var(--gm-text-secondary); }
+.price-label i { margin-right: 0.5rem; opacity: 0.7; }
+.price-value { font-weight: 600; }
+.price-value.primary { color: var(--gm-primary); }
+
+.timeline {
+    position: relative;
+    padding-left: 28px;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--gm-border);
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.25rem;
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot {
+    position: absolute;
+    left: -22px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--gm-border);
+    border: 2px solid var(--gm-surface);
+}
+.timeline-dot.active { background: var(--gm-primary); }
+.timeline-dot.completed { background: var(--gm-success); }
+.timeline-dot.pending { background: #9ca3af; }
+.timeline-title { font-weight: 600; font-size: 0.9rem; color: var(--gm-text-main); }
+.timeline-title.pending { color: var(--gm-text-secondary); }
+.timeline-meta { font-size: 0.78rem; color: var(--gm-text-secondary); }
+
+.section-card {
+    background: var(--gm-surface);
+    border-radius: var(--gm-radius-lg);
+    box-shadow: var(--gm-shadow-card);
+    margin-bottom: 1.5rem;
+}
+.section-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--gm-border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.section-header .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gm-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gm-text-secondary);
+}
+.section-header .title-group .subtitle { font-size: 0.8rem; color: var(--gm-text-secondary); }
+.section-header .title-group .title { font-weight: 700; font-size: 1.1rem; }
+.section-body { padding: 1.5rem; }
+
+.accordion-section {
+    border-bottom: 1px solid var(--gm-border);
+}
+.accordion-section:last-child { border-bottom: none; }
+.accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.accordion-header:hover { background: #f8fafc; }
+.accordion-header .title { font-weight: 600; font-size: 0.95rem; }
+.accordion-content { padding: 0 1.5rem 1.5rem; }
+
+.doc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gm-border);
+    border-radius: var(--gm-radius-sm);
+    background: var(--gm-surface);
+    color: var(--gm-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.doc-btn:hover {
+    background: var(--gm-primary-light);
+    border-color: var(--gm-primary);
+    color: var(--gm-primary);
+}
+.doc-btn i { font-size: 1rem; }
+
+.note-bubble {
+    background: var(--gm-bg);
+    border-radius: var(--gm-radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+.note-author { font-weight: 600; font-size: 0.85rem; }
+.note-date { font-size: 0.75rem; color: var(--gm-text-secondary); }
+.note-content { font-size: 0.9rem; color: var(--gm-text-main); }
+
+/* Process Checklist */
+.process-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.process-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--gm-border);
+}
+.process-item:last-child { border-bottom: none; }
+.process-check {
+    margin-right: 1rem;
+    padding-top: 2px;
+}
+.process-check .form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    border: 2px solid #d1d5db;
+}
+.process-check .form-check-input:checked {
+    background-color: var(--gm-primary);
+    border-color: var(--gm-primary);
+}
+.process-content { flex: 1; }
+.process-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--gm-text-secondary);
+}
+.process-title.completed {
+    color: var(--gm-text-main);
+}
+.process-meta {
+    font-size: 0.78rem;
+    color: var(--gm-text-secondary);
+    margin-top: 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- LEFT COLUMN: Køretøj Info -->
+    <div class="col-lg-4">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="icon"><i class="bi bi-car-front"></i></div>
+                <div class="title-group">
+                    <div class="subtitle">Køretøj</div>
+                    <div class="title">{{ car.make }} {{ car.model }}</div>
+                </div>
+            </div>
+            
+            <!-- Annonce Link -->
+            {% set ad_links = car.documents.all()|selectattr('document_type','equalto','ad_link')|list %}
+            {% if ad_links %}
+            <div class="px-4 py-3 border-bottom">
+                <a href="{{ ad_links[0].file_path }}" target="_blank" rel="noopener" class="text-decoration-none d-flex align-items-center text-primary">
+                    <i class="bi bi-link-45deg me-2"></i>
+                    <span class="text-truncate" style="max-width: 200px;">{{ ad_links[0].file_path }}</span>
+                    <i class="bi bi-box-arrow-up-right ms-auto"></i>
+                </a>
+            </div>
+            {% else %}
+            <div class="px-4 py-3 border-bottom">
+                <span class="text-muted small"><i class="bi bi-link-45deg me-2"></i>Intet annonce-link tilføjet</span>
+            </div>
+            {% endif %}
+            
+            <div class="section-body">
+                <div class="info-row">
+                    <span class="info-label">Mærke</span>
+                    <span class="info-value">{{ car.make }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Model</span>
+                    <span class="info-value">{{ car.model }}</span>
+                </div>
+                {% if car.equipment %}
+                <div class="info-row">
+                    <span class="info-label">Udstyr</span>
+                    <span class="info-value text-primary" style="max-width: 60%; text-align: right; font-size: 0.85rem;">{{ car.equipment[:50] }}{% if car.equipment|length > 50 %}...{% endif %}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">1. reg. dato</span>
+                    <span class="info-value">{{ car.first_registration.strftime('%d-%m-%Y') if car.first_registration else '-' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Stelnummer</span>
+                    <span class="info-value font-monospace" style="font-size: 0.85rem;">{{ car.vin }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Kilometertal</span>
+                    <span class="info-value">{{ "{:,.0f}".format(car.mileage)|replace(',', '.') if car.mileage else '-' }} km</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Karosseri</span>
+                    <span class="info-value">{{ car.fuel_type or 'SUV' }}</span>
+                </div>
+            </div>
+            
+            <!-- Accordion Sections -->
+            <div class="accordion-section">
+                <div class="accordion-header" data-bs-toggle="collapse" data-bs-target="#bildata">
+                    <span class="title">Bildata</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div id="bildata" class="collapse">
+                    <div class="accordion-content">
+                        <div class="info-row">
+                            <span class="info-label">Årgang</span>
+                            <span class="info-value">{{ car.year }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Farve</span>
+                            <span class="info-value">{{ car.color or '-' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Gear</span>
+                            <span class="info-value">{{ car.transmission or 'Automatisk' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Brændstof</span>
+                            <span class="info-value">{{ car.fuel_type or '-' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-section">
+                <div class="accordion-header" data-bs-toggle="collapse" data-bs-target="#service">
+                    <span class="title">Service</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div id="service" class="collapse">
+                    <div class="accordion-content">
+                        <div class="info-row">
+                            <span class="info-label">Seneste service</span>
+                            <span class="info-value">{{ car.service_history[:30] if car.service_history else '-' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Synsudløb</span>
+                            <span class="info-value">{{ car.inspection_valid_until.strftime('%d-%m-%Y') if car.inspection_valid_until else '-' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-section">
+                <div class="accordion-header" data-bs-toggle="collapse" data-bs-target="#stand">
+                    <span class="title">Stand</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div id="stand" class="collapse">
+                    <div class="accordion-content">
+                        <p class="text-muted small mb-0">{{ car.condition_notes or 'Ingen tilstandsnoter registreret.' }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Handlinger -->
+            <div class="border-top p-4">
+                <div class="text-muted-small mb-3">Handlinger</div>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('cars.edit_car', car_id=car.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil me-2"></i>Rediger bil
+                    </a>
+                    <a href="{{ url_for('sales.add_sale') }}?car_id={{ car.id }}" class="btn btn-success btn-sm">
+                        <i class="bi bi-cash-coin me-2"></i>Opret Salg
+                    </a>
+                    <a href="{{ url_for('logistics.add_logistics', car_id=car.id) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-truck me-2"></i>Tilføj Logistik
+                    </a>
+                    {% if current_user.is_admin() %}
+                    <form method="POST" action="{{ url_for('cars.delete_car', car_id=car.id) }}" 
+                          onsubmit="return confirm('Er du sikker på at du vil slette denne bil?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="bi bi-trash me-2"></i>Slet Bil
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- MIDDLE COLUMN: Tilbud / Økonomi -->
+    <div class="col-lg-4">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="icon"><i class="bi bi-receipt"></i></div>
+                <div class="title-group">
+                    <div class="subtitle">Tilbud</div>
+                    <div class="title">Prisberegning</div>
+                </div>
+            </div>
+            
+            <div class="section-body">
+                <!-- Priser -->
+                <div class="price-row">
+                    <span class="price-label">Annonceret pris (Netto)</span>
+                    <span class="price-value">{{ "{:,.0f}".format(car.purchase_price)|replace(',', '.') }} {{ car.purchase_currency }}</span>
+                </div>
+                
+                {% if car.discount and car.discount > 0 %}
+                <div class="price-row">
+                    <span class="price-label">Rabat (Netto)</span>
+                    <span class="price-value text-success">-{{ "{:,.0f}".format(car.discount)|replace(',', '.') }} {{ car.purchase_currency }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="price-row" style="border-top: 1px solid var(--gm-border); padding-top: 0.75rem; margin-top: 0.5rem;">
+                    <span class="price-label"><strong>Pris efter forhandling - u. moms</strong></span>
+                    <span class="price-value"><strong>{{ "{:,.0f}".format(car.net_purchase_price())|replace(',', '.') }} {{ car.purchase_currency }}</strong></span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Dansk pris netto</span>
+                    <span class="price-value">{{ "{:,.0f}".format(car.net_price_dkk())|replace(',', '.') }} DKK</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Ekspeditionsgebyr - u. moms</span>
+                    <span class="price-value">{% if car.expedition_fee and car.expedition_fee > 0 %}{{ "{:,.0f}".format(car.expedition_fee)|replace(',', '.') }} {{ car.purchase_currency }}{% else %}-{% endif %}</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Transport</span>
+                    <span class="price-value">{% if car.transport_cost and car.transport_cost > 0 %}{{ "{:,.0f}".format(car.transport_cost)|replace(',', '.') }} DKK{% else %}-{% endif %}</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Transporttillæg</span>
+                    <span class="price-value">{% if car.transport_surcharge and car.transport_surcharge > 0 %}{{ "{:,.0f}".format(car.transport_surcharge)|replace(',', '.') }} DKK{% else %}-{% endif %}</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Told</span>
+                    <span class="price-value">{% if car.customs_cost and car.customs_cost > 0 %}{{ "{:,.0f}".format(car.customs_cost)|replace(',', '.') }} DKK{% else %}-{% endif %}</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Fakturagebyr</span>
+                    <span class="price-value">{% if car.invoice_fee and car.invoice_fee > 0 %}{{ "{:,.0f}".format(car.invoice_fee)|replace(',', '.') }} €{% else %}-{% endif %}</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Klargøring</span>
+                    <span class="price-value">{% if car.preparation_cost and car.preparation_cost > 0 %}{{ "{:,.0f}".format(car.preparation_cost)|replace(',', '.') }} DKK{% else %}-{% endif %}</span>
+                </div>
+                
+                <div class="price-row">
+                    <span class="price-label">Omkostninger</span>
+                    <span class="price-value">{{ "{:,.0f}".format(car.total_additional_costs())|replace(',', '.') }} DKK</span>
+                </div>
+                
+                <div class="price-row total">
+                    <span class="price-label">Samlet pris</span>
+                    <span class="price-value primary" style="font-size: 1.1rem;">{{ "{:,.0f}".format(car.total_cost())|replace(',', '.') }} DKK</span>
+                </div>
+                
+                <!-- Fortjeneste -->
+                <div class="price-row" style="border-top: 2px solid var(--gm-primary); padding-top: 0.75rem; margin-top: 0.75rem;">
+                    <span class="price-label"><strong>Fortjeneste</strong></span>
+                    <span class="price-value text-success"><strong>{{ "{:,.0f}".format(car.total_cost() * 0.06)|replace(',', '.') }} DKK</strong></span>
+                </div>
+                
+                <!-- Salgspris til forhandler -->
+                <div class="price-row total" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); margin: 0.5rem -1.5rem; padding: 1rem 1.5rem; border-radius: 8px;">
+                    <span class="price-label"><strong style="color: #16a34a;">Salgspris til forhandler</strong><br><small class="text-muted">ex. moms og afgift</small></span>
+                    <span class="price-value" style="font-size: 1.2rem; color: #16a34a;"><strong>{{ "{:,.0f}".format(car.total_cost() - 8700)|replace(',', '.') }} DKK</strong></span>
+                </div>
+            </div>
+            
+            <!-- Bestilling Section -->
+            <div class="border-top">
+                <div class="section-header border-0">
+                    <div class="icon"><i class="bi bi-cart-check"></i></div>
+                    <div class="title-group">
+                        <div class="title">Bestilling</div>
+                    </div>
+                </div>
+                
+                <div class="px-4 pb-4">
+                    <p class="text-muted small mb-3">Upload eller hent dokumenter relateret til denne bil:</p>
+                    
+                    <!-- Alert -->
+                    {% if car.status == 'ordered' %}
+                    <div class="alert alert-info d-flex align-items-center mb-4" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Bilen er bestilt. Afventer dokumenter og betaling.
+                    </div>
+                    {% endif %}
+                    
+                    <p class="small fw-bold mb-3">1. Upload følgende dokumenter:</p>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <button class="doc-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="bi bi-download"></i> Købsaftale
+                        </button>
+                        <button class="doc-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="bi bi-download"></i> Faktura
+                        </button>
+                    </div>
+                    
+                    <p class="small text-muted mb-4">Underskrevet dokumenter skal uploades i systemet, eller sendes til <a href="mailto:import@greenmotion.dk" class="text-primary">import@greenmotion.dk</a></p>
+                    
+                    <p class="small fw-bold mb-3">2. Dokumentation:</p>
+                    <div class="mb-3">
+                        <form method="POST" action="{{ url_for('cars.upload_document', car_id=car.id) }}" enctype="multipart/form-data" class="d-flex gap-2">
+                            <input type="file" class="form-control form-control-sm" name="file_upload" required>
+                            <input type="hidden" name="file_type" value="other">
+                            <button type="submit" class="btn btn-sm btn-primary" title="Upload dokument">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Uploadede dokumenter -->
+                    {% if car.documents %}
+                    <div class="uploaded-docs">
+                        {% for doc in car.documents %}
+                        <div class="doc-item d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <a href="{{ url_for('cars.download_document', doc_id=doc.id) }}" class="text-decoration-none small">
+                                <i class="bi bi-file-earmark me-1"></i>{{ doc.name or doc.filename }}
+                            </a>
+                            <div class="d-flex align-items-center gap-2">
+                                <small class="text-muted">{{ doc.created_at.strftime('%d-%m-%Y') if doc.created_at else '' }}</small>
+                                <form method="POST" action="{{ url_for('cars.delete_document', car_id=car.id, doc_id=doc.id) }}" class="d-inline" onsubmit="return confirm('Er du sikker på at du vil slette dette dokument?');">
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Slet dokument">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RIGHT COLUMN: Proces / Timeline -->
+    <div class="col-lg-4">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="icon"><i class="bi bi-list-check"></i></div>
+                <div class="title-group">
+                    <div class="subtitle">Proces</div>
+                    <div class="title">Status & Historik</div>
+                </div>
+            </div>
+            
+            <div class="section-body">
+                <div class="process-checklist">
+                    <!-- Sag oprettet (always done) -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" checked disabled class="form-check-input" style="opacity: 0.7;">
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title completed">Sag oprettet</div>
+                            <div class="process-meta">{{ car.created_at.strftime('%d-%m-%Y - kl. %H:%M') if car.created_at else '-' }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Køretøj forespurgt -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="inquiry" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_inquiry_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_inquiry_done %}completed{% endif %}">Køretøj er forespurgt og forhandlet</div>
+                            <div class="process-meta" id="date-inquiry">{% if car.process_inquiry_date %}{{ car.process_inquiry_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Køretøj bestilt -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="ordered" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_ordered_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_ordered_done %}completed{% endif %}">Køretøj bestilt</div>
+                            <div class="process-meta" id="date-ordered">{% if car.process_ordered_date %}{{ car.process_ordered_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kaufvertrag modtaget -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="kaufvertrag" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_kaufvertrag_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_kaufvertrag_done %}completed{% endif %}">Kaufvertrag modtaget</div>
+                            <div class="process-meta" id="date-kaufvertrag">{% if car.process_kaufvertrag_date %}{{ car.process_kaufvertrag_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gelangenbestätigung modtaget -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="gelangen" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_gelangen_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_gelangen_done %}completed{% endif %}">Gelangenbestätigung modtaget</div>
+                            <div class="process-meta" id="date-gelangen">{% if car.process_gelangen_date %}{{ car.process_gelangen_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hjemtagelsesaftale modtaget -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="hjemtagelse" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_hjemtagelse_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_hjemtagelse_done %}completed{% endif %}">Hjemtagelsesaftale modtaget</div>
+                            <div class="process-meta" id="date-hjemtagelse">{% if car.process_hjemtagelse_date %}{{ car.process_hjemtagelse_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Betaling registreret -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="payment" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_payment_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_payment_done %}completed{% endif %}">Betaling registreret</div>
+                            <div class="process-meta" id="date-payment">{% if car.process_payment_date %}{{ car.process_payment_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Køretøj på vej hjem -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="in_transit" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_in_transit_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_in_transit_done %}completed{% endif %}">Køretøjet er markeret 'På vej hjem'</div>
+                            <div class="process-meta" id="date-in_transit">{% if car.process_in_transit_date %}{{ car.process_in_transit_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Køretøj leveret -->
+                    <div class="process-item">
+                        <div class="process-check">
+                            <input type="checkbox" class="form-check-input process-checkbox" 
+                                   data-step="delivered" 
+                                   data-car-id="{{ car.id }}"
+                                   {% if car.process_delivered_done %}checked{% endif %}>
+                        </div>
+                        <div class="process-content">
+                            <div class="process-title {% if car.process_delivered_done %}completed{% endif %}">Køretøj leveret</div>
+                            <div class="process-meta" id="date-delivered">{% if car.process_delivered_date %}{{ car.process_delivered_date.strftime('%d-%m-%Y - kl. %H:%M') }}{% else %}Afventer{% endif %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alle Noter -->
+            <div class="border-top p-4">
+                <div class="text-muted-small mb-3">Noter</div>
+                <div class="notes-list" style="max-height: 250px; overflow-y: auto;">
+                    {% set notes = car.parsed_notes %}
+                    {% if notes %}
+                        {% for note in notes %}
+                        <div class="note-item mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 11px;">
+                                        {{ note.initials }}
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <div class="bg-light p-2 rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong style="font-size: 0.8rem;">{{ note.user }}</strong>
+                                            <small class="text-muted" style="font-size: 0.7rem;">{{ note.date }}</small>
+                                        </div>
+                                        <div style="font-size: 0.85rem;">{{ note.content }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-2">
+                            <small>Ingen noter endnu</small>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Tilføj note form -->
+                <form method="POST" action="{{ url_for('cars.add_note', car_id=car.id) }}" class="mt-3">
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" name="note_content" placeholder="Tilføj ny note..." required>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Tilføj Fil eller Link
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('cars.upload_document', car_id=car.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-panel" type="button" role="tab">
+                                <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload Fil
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="link-tab" data-bs-toggle="tab" data-bs-target="#link-panel" type="button" role="tab">
+                                <i class="bi bi-link-45deg me-1"></i>Tilføj Link
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="file-panel" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="file_upload" class="form-label">Vælg fil</label>
+                                <input type="file" class="form-control" id="file_upload" name="file_upload">
+                            </div>
+                            <div class="mb-3">
+                                <label for="file_name" class="form-label">Navn</label>
+                                <input type="text" class="form-control" id="file_name" name="file_name" placeholder="Filnavn (valgfrit)">
+                            </div>
+                            <div class="mb-3">
+                                <label for="file_type" class="form-label">Type</label>
+                                <select class="form-select" id="file_type" name="file_type">
+                                    <option value="kaufvertrag">Kaufvertrag</option>
+                                    <option value="gelangenbestatigung">Gelangenbestätigung</option>
+                                    <option value="hjemtagelsesaftale">Hjemtagelsesaftale</option>
+                                    <option value="invoice">Faktura</option>
+                                    <option value="bilrapport">Bilrapport</option>
+                                    <option value="photo">Foto</option>
+                                    <option value="contract">Kontrakt</option>
+                                    <option value="import_docs">Importdokumenter</option>
+                                    <option value="registration">Registrering</option>
+                                    <option value="inspection">Syn</option>
+                                    <option value="other">Andet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="link-panel" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="link_url" class="form-label">URL</label>
+                                <input type="url" class="form-control" id="link_url" name="link_url" placeholder="https://...">
+                            </div>
+                            <div class="mb-3">
+                                <label for="link_name" class="form-label">Navn</label>
+                                <input type="text" class="form-control" id="link_name" name="link_name" placeholder="Annonce Link">
+                            </div>
+                            <input type="hidden" name="link_type" value="ad_link">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Gem
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Process checklist functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.process-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const step = this.dataset.step;
+            const carId = this.dataset.carId;
+            const checked = this.checked;
+            const titleEl = this.closest('.process-item').querySelector('.process-title');
+            const dateEl = document.getElementById('date-' + step);
+            
+            // Optimistic UI update
+            if (checked) {
+                titleEl.classList.add('completed');
+            } else {
+                titleEl.classList.remove('completed');
+            }
+            
+            // Send to server
+            const formData = new FormData();
+            formData.append('step', step);
+            formData.append('checked', checked);
+            
+            fetch(`/cars/${carId}/update-process`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (dateEl) {
+                        dateEl.textContent = data.date;
+                    }
+                } else {
+                    // Revert on error
+                    this.checked = !checked;
+                    if (checked) {
+                        titleEl.classList.remove('completed');
+                    } else {
+                        titleEl.classList.add('completed');
+                    }
+                    alert('Fejl ved opdatering: ' + (data.error || 'Ukendt fejl'));
+                }
+            })
+            .catch(error => {
+                // Revert on error
+                this.checked = !checked;
+                if (checked) {
+                    titleEl.classList.remove('completed');
+                } else {
+                    titleEl.classList.add('completed');
+                }
+                console.error('Error:', error);
+            });
+        });
+    });
+    
+    // Notes autosave functionality
+    const notesTextarea = document.getElementById('processNotes');
+    const saveBtn = document.getElementById('saveNotesBtn');
+    const statusEl = document.getElementById('notesSaveStatus');
+    let saveTimeout;
+    let originalValue = notesTextarea ? notesTextarea.value : '';
+    
+    if (notesTextarea) {
+        // Show save button when content changes
+        notesTextarea.addEventListener('input', function() {
+            if (this.value !== originalValue) {
+                saveBtn.style.display = 'inline-block';
+                statusEl.textContent = '';
+            } else {
+                saveBtn.style.display = 'none';
+            }
+            
+            // Autosave after 2 seconds of no typing
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                if (this.value !== originalValue) {
+                    saveNotes();
+                }
+            }, 2000);
+        });
+        
+        // Manual save button
+        saveBtn.addEventListener('click', saveNotes);
+        
+        // Save on blur (when clicking outside)
+        notesTextarea.addEventListener('blur', function() {
+            if (this.value !== originalValue) {
+                saveNotes();
+            }
+        });
+        
+        function saveNotes() {
+            const carId = notesTextarea.dataset.carId;
+            const notes = notesTextarea.value;
+            
+            statusEl.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Gemmer...';
+            
+            const formData = new FormData();
+            formData.append('notes', notes);
+            
+            fetch(`/cars/${carId}/update-notes`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    originalValue = notes;
+                    saveBtn.style.display = 'none';
+                    statusEl.innerHTML = '<i class="bi bi-check-circle text-success"></i> Gemt';
+                    setTimeout(() => {
+                        statusEl.textContent = '';
+                    }, 2000);
+                } else {
+                    statusEl.innerHTML = '<i class="bi bi-x-circle text-danger"></i> Fejl ved gem';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusEl.innerHTML = '<i class="bi bi-x-circle text-danger"></i> Fejl ved gem';
+            });
+        }
+    }
+    
+    // Market price functionality
+    const marketPriceInput = document.getElementById('marketPriceInput');
+    const saveMarketPriceBtn = document.getElementById('saveMarketPriceBtn');
+    const priceComparisonResult = document.getElementById('priceComparisonResult');
+    
+    if (saveMarketPriceBtn) {
+        saveMarketPriceBtn.addEventListener('click', function() {
+            const carId = {{ car.id }};
+            const marketPrice = marketPriceInput.value;
+            
+            const formData = new FormData();
+            formData.append('market_price', marketPrice);
+            
+            fetch(`/cars/${carId}/update-market-price`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Opdater sammenligning
+                    if (data.market_price > 0) {
+                        const diffClass = data.difference > 0 ? 'text-success' : 'text-danger';
+                        const diffLabel = data.difference > 0 ? 'Besparelse:' : 'Merpris:';
+                        
+                        priceComparisonResult.innerHTML = `
+                            <div class="bg-light rounded p-3">
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Din pris:</span>
+                                    <span>${data.total_cost.toLocaleString('da-DK')} DKK</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Markedspris:</span>
+                                    <span>${data.market_price.toLocaleString('da-DK')} DKK</span>
+                                </div>
+                                <div class="d-flex justify-content-between pt-2 border-top">
+                                    <span class="fw-bold ${diffClass}">${diffLabel}</span>
+                                    <span class="fw-bold ${diffClass}">${Math.abs(data.difference).toLocaleString('da-DK')} DKK (${Math.abs(data.difference_percent)}%)</span>
+                                </div>
+                            </div>
+                        `;
+                        priceComparisonResult.style.display = 'block';
+                    } else {
+                        priceComparisonResult.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    }
+});
+</script>
+
+<style>
+.spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.process-notes {
+    border: 1px solid var(--gm-border);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 100px;
+    font-size: 0.9rem;
+}
+.process-notes:focus {
+    border-color: var(--gm-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %}
