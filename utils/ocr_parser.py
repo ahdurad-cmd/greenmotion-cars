@@ -4,7 +4,10 @@ Extracts structured data from advertisement images/screenshots and PDF files.
 """
 import re
 from PIL import Image
-import pytesseract
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
 from typing import Dict, Any, Optional
 import os
 import requests
@@ -102,6 +105,9 @@ class AdParser:
             Dictionary with extracted fields (vin, make, model, year, price, mileage, etc.)
         """
         try:
+            if pytesseract is None:
+                return {'error': 'OCR not available - pytesseract not installed'}
+            
             # Open and preprocess image
             image = Image.open(image_path)
             
@@ -132,7 +138,10 @@ class AdParser:
             Dictionary with extracted fields
         """
         try:
-            from pdf2image import convert_from_path
+            try:
+                from pdf2image import convert_from_path
+            except ImportError:
+                convert_from_path = None
             import PyPDF2
             
             combined_text = ""
@@ -150,6 +159,8 @@ class AdParser:
             
             # If no text or very little text, use OCR on images
             if len(combined_text.strip()) < 50:
+                if convert_from_path is None or pytesseract is None:
+                    return {'error': 'PDF OCR not available - dependencies not installed'}
                 # Convert PDF pages to images
                 images = convert_from_path(pdf_path, dpi=300, first_page=1, last_page=3)
                 

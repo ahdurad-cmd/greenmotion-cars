@@ -31,43 +31,6 @@ def create_app(config_name=None):
     # Setup logging
     setup_logging(app)
     app.logger.info(f'GreenMotion Cars CRM starting in {config_name} mode')
-    @app.route('/dashboard')
-    def dashboard():
-        try:
-            from models.car import Car
-            from sqlalchemy import desc
-            recent = Car.query.order_by(desc(getattr(Car, 'updated_at', getattr(Car, 'id')))).limit(10).all()
-            kpis = {
-                'inventory_count': Car.query.count(),
-                'pipeline_open': Car.query.filter(getattr(Car, 'stage', '') != 'Sold').count() if hasattr(Car, 'stage') else recent and len(recent) or 0
-            }
-        except Exception:
-            recent = []
-            kpis = {'inventory_count': 0, 'pipeline_open': 0}
-        return render_template('dashboard.html', kpis=kpis, recent=recent)
-
-    @app.route('/search')
-    def search():
-        query = request.args.get('q', '').strip()
-        results = {
-            'cars': [],
-            'customers': [],
-            'docs': []
-        }
-        try:
-            from models.car import Car
-            if query:
-                results['cars'] = Car.query.filter(
-                    (Car.make.ilike(f"%{query}%")) |
-                    (Car.model.ilike(f"%{query}%")) |
-                    (Car.vin.ilike(f"%{query}%"))
-                ).limit(25).all()
-        except Exception:
-            pass
-        return render_template('search.html', q=query, results=results)
-    # Setup logging
-    setup_logging(app)
-    app.logger.info(f'GreenMotion Cars CRM starting in {config_name} mode')
     
     # Initialize extensions
     from database import db, login_manager
@@ -131,6 +94,34 @@ def create_app(config_name=None):
                              recent_sales=recent_sales,
                              users=users)
     
+    @app.route('/dashboard')
+    @login_required
+    def dashboard():
+        """Dashboard page - redirects to index"""
+        return redirect(url_for('index'))
+    
+    @app.route('/search')
+    @login_required
+    def search():
+        """Search page"""
+        query = request.args.get('q', '').strip()
+        results = {
+            'cars': [],
+            'customers': [],
+            'docs': []
+        }
+        try:
+            from models.car import Car
+            if query:
+                results['cars'] = Car.query.filter(
+                    (Car.make.ilike(f"%{query}%")) |
+                    (Car.model.ilike(f"%{query}%")) |
+                    (Car.vin.ilike(f"%{query}%"))
+                ).limit(25).all()
+        except Exception:
+            pass
+        return render_template('search.html', q=query, results=results)
+    
     @app.context_processor
     def inject_now():
         """Make datetime available in templates"""
@@ -142,8 +133,9 @@ def create_app(config_name=None):
         """Health check endpoint for monitoring"""
         try:
             from database import db
+            from sqlalchemy import text
             # Test database connection
-            db.session.execute('SELECT 1')
+            db.session.execute(text('SELECT 1'))
             return jsonify({
                 'status': 'healthy',
                 'database': 'connected',
@@ -199,9 +191,8 @@ def register_error_handlers(app):
         
         return render_template('errors/500.html'), 500
 
+# Create app for gunicorn
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
-    with app.app_context():
-        from database import db
-        db.create_all()
     app.run(debug=True, host='0.0.0.0', port=5001)
