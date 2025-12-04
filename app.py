@@ -77,6 +77,10 @@ def create_app(config_name=None):
     cache.init_app(app)
     migrate.init_app(app, db)
     
+    # Create database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+    
     # Register error handlers
     register_error_handlers(app)
     
