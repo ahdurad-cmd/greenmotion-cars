@@ -89,23 +89,25 @@ def change_password():
 @bp.route('/setup-admin')
 def setup_admin():
     """Create initial admin user - only works if no users exist"""
-    from models.user import User
-    
-    # Check if any user exists
-    if User.query.first() is not None:
-        return "Admin already exists", 403
-    
-    # Create admin user
-    admin = User(
-        username='admin',
-        email='ahdurad@gmail.com',
-        full_name='Administrator',
-        role='admin',
-        is_active=True
-    )
-    admin.set_password('GreenMotion2025!')
-    
-    db.session.add(admin)
-    db.session.commit()
-    
-    return "Admin user created! Username: admin, Password: GreenMotion2025!"
+    try:
+        # Check if any user exists
+        if User.query.first() is not None:
+            return "Admin already exists", 403
+        
+        # Create admin user
+        admin = User(
+            username='admin',
+            email='ahdurad@gmail.com',
+            full_name='Administrator',
+            role='admin',
+            is_active=True
+        )
+        admin.set_password('GreenMotion2025!')
+        
+        db.session.add(admin)
+        db.session.commit()
+        
+        return "Admin user created! Username: admin, Password: GreenMotion2025!"
+    except Exception as e:
+        db.session.rollback()
+        return f"Error: {str(e)}", 500
