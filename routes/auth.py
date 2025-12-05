@@ -90,24 +90,49 @@ def change_password():
 def init_db():
     """Initialize database tables"""
     try:
+        # Import all models to register them with SQLAlchemy
+        from models.user import User
+        from models.car import Car
+        from models.customer import Customer
+        from models.sale import Sale
+        from models.logistics import Logistics
+        from models.document import Document
+        from models.invoice import Invoice, InvoiceItem
+        from models.calendar_event import CalendarEvent
+        from models.company_settings import CompanySettings
+        
         db.create_all()
         return "Database tables created!"
     except Exception as e:
-        return f"Error: {str(e)}", 500
+        import traceback
+        return f"Error: {str(e)}\n\n{traceback.format_exc()}", 500
 
 @bp.route('/setup-admin')
 def setup_admin():
     """Create initial admin user - only works if no users exist"""
     try:
-        # Ensure tables exist
-        db.create_all()
+        # Import all models to register them with SQLAlchemy
+        from models.user import User as UserModel
+        from models.car import Car
+        from models.customer import Customer
+        from models.sale import Sale
+        from models.logistics import Logistics
+        from models.document import Document
+        from models.invoice import Invoice, InvoiceItem
+        from models.calendar_event import CalendarEvent
+        from models.company_settings import CompanySettings
         
-        # Check if any user exists
-        if User.query.first() is not None:
+        # Ensure tables exist FIRST
+        db.create_all()
+        db.session.commit()
+        
+        # Now check if any user exists
+        existing = UserModel.query.first()
+        if existing is not None:
             return "Admin already exists", 403
         
         # Create admin user
-        admin = User(
+        admin = UserModel(
             username='admin',
             email='ahdurad@gmail.com',
             full_name='Administrator',
@@ -122,4 +147,5 @@ def setup_admin():
         return "Admin user created! Username: admin, Password: GreenMotion2025!"
     except Exception as e:
         db.session.rollback()
-        return f"Error: {str(e)}", 500
+        import traceback
+        return f"Error: {str(e)}\n\n{traceback.format_exc()}", 500
