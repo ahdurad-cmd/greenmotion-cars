@@ -97,7 +97,7 @@ def init_db():
         from models.sale import Sale
         from models.logistics import LogisticsEntry
         from models.document import Document
-        from models.invoice import Invoice, InvoiceItem
+        from models.invoice import Invoice, InvoiceLineItem
         from models.calendar_event import CalendarEvent
         from models.company_settings import CompanySettings
         
@@ -118,7 +118,7 @@ def setup_admin():
         from models.sale import Sale
         from models.logistics import LogisticsEntry
         from models.document import Document
-        from models.invoice import Invoice, InvoiceItem
+        from models.invoice import Invoice, InvoiceLineItem
         from models.calendar_event import CalendarEvent
         from models.company_settings import CompanySettings
         
